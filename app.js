@@ -1,9 +1,9 @@
-// Button Click
+// Button test
 document.getElementById('btn').addEventListener('click', () => {
   document.getElementById('status').textContent = '✅ Button Clicked';
 });
 
-// Online / Offline status
+// Online / Offline
 window.addEventListener('online', () => {
   document.getElementById('status').textContent = '🟢 Online';
 });
@@ -12,26 +12,18 @@ window.addEventListener('offline', () => {
   document.getElementById('status').textContent = '🔴 Offline';
 });
 
-// ===============================
-// ✅ PWA Install Banner
-// ===============================
+// PWA Install Banner
 let deferredPrompt;
 const installBtn = document.getElementById('installBtn');
 
 window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault(); // ปิด banner default
+  e.preventDefault();
   deferredPrompt = e;
-  installBtn.hidden = false; // แสดงปุ่ม Install
+  installBtn.classList.remove('hidden');
 });
 
 installBtn.addEventListener('click', async () => {
-  installBtn.hidden = true;
-
-  if (!deferredPrompt) return;
-
-  deferredPrompt.prompt();
-  const { outcome } = await deferredPrompt.userChoice;
-  console.log('Install result:', outcome);
-
+  installBtn.classList.add('hidden');
+  await deferredPrompt.prompt();
   deferredPrompt = null;
 });
