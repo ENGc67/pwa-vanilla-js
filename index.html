@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>PWA Vanilla JS</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0d6efd" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <h1>🚀 PWA Vanilla JS</h1>
+  <p id="status">Offline Ready</p>
+
+  <button id="btn">Click Me</button>
+
+  <script src="app.js"></script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+
+</body>
+</html>
