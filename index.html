@@ -16,6 +16,7 @@
   <!-- Style -->
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
 
   <div class="app">
@@ -29,10 +30,31 @@
     <button id="installBtn" class="install hidden">
       📲 Install App
     </button>
+
+    <hr />
+
+    <!-- ✅ Hello User Section -->
+    <label for="username">Username:</label>
+    <input id="username" type="text" placeholder="Enter name" />
+
+    <button id="helloBtn">Hello user</button>
+
+    <div id="greeting" aria-live="polite"></div>
   </div>
 
+  <!-- App Script -->
   <script src="app.js"></script>
 
+  <!-- Hello User Script -->
+  <script>
+    document.getElementById('helloBtn').addEventListener('click', function () {
+      const name = document.getElementById('username').value.trim();
+      const msg = name ? 'Hello to ' + name : 'Hello to';
+      document.getElementById('greeting').textContent = msg;
+    });
+  </script>
+
+  <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');
@@ -40,9 +62,4 @@
   </script>
 
 </body>
-
-<!-- DEV TEST -->
- <!-- DEV TEST -->
-
-
 </html>
