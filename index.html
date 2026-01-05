@@ -6,9 +6,14 @@
 
   <title>PWA Vanilla JS</title>
 
+  <!-- ✅ Favicon -->
+  <link rel="icon" href="/favicon.ico" />
+
+  <!-- ✅ PWA -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0d6efd" />
 
+  <!-- ✅ Style -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -18,8 +23,10 @@
 
   <button id="btn">Click Me</button>
 
+  <!-- ✅ App Script -->
   <script src="app.js"></script>
 
+  <!-- ✅ Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');
