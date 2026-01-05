@@ -31,13 +31,27 @@
     </button>
   </div>
 
+  <label for="username">Username:</label>
+  <input id="username" type="text" placeholder="Enter name" />
+  <button id="helloBtn">Hello user</button>
+  <div id="greeting" aria-live="polite"></div>
+
   <script src="app.js"></script>
 
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');
     }
+
+    document.getElementById('helloBtn').addEventListener('click', function () {
+      const name = document.getElementById('username').value.trim();
+      const msg = name ? 'Hello to ' + name : 'Hello to';
+      document.getElementById('greeting').textContent = msg;
+    });
   </script>
 
 </body>
+
+
+
 </html>
