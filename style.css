@@ -1,20 +1,27 @@
+/* =========================
+   GLOBAL LAYOUT
+   ========================= */
+
 body {
   margin: 0;
-  height: 100vh;
-  font-family: system-ui, sans-serif;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
   background: linear-gradient(135deg, #0d6efd, #6f42c1);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  padding: 20px;
 }
 
+/* =========================
+   APP CARD
+   ========================= */
+
 .app {
-  background: white;
+  background: #ffffff;
   padding: 40px 30px;
   border-radius: 16px;
-  width: 320px;
-  text-align: center;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  max-width: 900px;
+  margin: 0 auto 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 h1 {
@@ -33,21 +40,6 @@ h2 {
   font-weight: bold;
 }
 
-button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-}
-
-#btn {
-  background: #0d6efd;
-  color: white;
-}
-
 .install {
   background: #198754;
   color: white;
@@ -55,4 +47,213 @@ button {
 
 .hidden {
   display: none;
+}
+
+/* =========================
+   SUPABASE DATA SECTION
+   ========================= */
+
+#tableContainer {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+/* =========================
+   TABLE STYLE (CRUD TEMPLATE)
+   ========================= */
+
+#dataTable {
+  margin-bottom: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Table header */
+#dataTable thead th {
+  background-color: #f1f3f5;
+  color: #333;
+  font-weight: 600;
+  border-bottom: 2px solid #dee2e6;
+  padding: 12px;
+  white-space: nowrap;
+}
+
+/* Index column */
+#dataTable th[scope="row"] {
+  width: 60px;
+  color: #555;
+}
+
+/* Zebra rows */
+#dataTable tbody tr:nth-child(odd) {
+  background-color: #f8f9fa;
+}
+
+#dataTable tbody tr:nth-child(even) {
+  background-color: #ffffff;
+}
+
+/* Hover effect */
+#dataTable tbody tr:hover {
+  background-color: #e9ecef;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+/* Table cells */
+#dataTable td,
+#dataTable th {
+  padding: 12px;
+  vertical-align: middle;
+}
+
+/* =========================
+   ACTION BUTTONS
+   ========================= */
+
+#dataTable .btn {
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+}
+
+#dataTable .btn:hover {
+  transform: scale(1.05);
+}
+
+/* Edit */
+#dataTable .btn-warning {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #000;
+}
+
+#dataTable .btn-warning:hover {
+  background-color: #fd7e14;
+  border-color: #fd7e14;
+}
+
+/* Delete */
+#dataTable .btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+#dataTable .btn-danger:hover {
+  background-color: #c82333;
+  border-color: #c82333;
+}
+
+/* Save / Cancel */
+#dataTable .btn-success:hover {
+  background-color: #157347;
+}
+
+#dataTable .btn-secondary:hover {
+  background-color: #5c636a;
+}
+
+/* Edit input */
+#dataTable input.form-control-sm {
+  font-size: 0.9rem;
+  padding: 4px 8px;
+}
+
+/* =========================
+   SORTABLE HEADERS
+   ========================= */
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.sortable:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.sort-indicator {
+  margin-left: 5px;
+  opacity: 0.4;
+}
+
+.sort-indicator::after {
+  content: "↕";
+}
+
+.sort-asc .sort-indicator::after {
+  content: "↑";
+  opacity: 1;
+}
+
+.sort-desc .sort-indicator::after {
+  content: "↓";
+  opacity: 1;
+}
+
+/* =========================
+   SEARCH / FILTER BAR
+   ========================= */
+
+.row.mb-3 {
+  margin-top: 20px !important;
+  margin-bottom: 20px !important;
+  border: 1px solid #0d6efd;
+  border-radius: 10px;
+  padding: 15px;
+  background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+#searchInput {
+  border-radius: 0;
+}
+
+#clearSearchBtn {
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+#clearSearchBtn:hover {
+  opacity: 1;
+}
+
+#searchInput:not(:placeholder-shown) + #clearSearchBtn {
+  opacity: 1;
+}
+
+/* =========================
+   LOADING / ERROR
+   ========================= */
+
+#loadingSpinner {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+}
+
+.alert {
+  margin-top: 10px;
+}
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+
+@media (max-width: 768px) {
+  .app {
+    padding: 30px 20px;
+  }
+
+  #dataTable th,
+  #dataTable td {
+    font-size: 0.85rem;
+  }
+
+  #dataTable .btn {
+    margin-bottom: 4px;
+  }
 }
