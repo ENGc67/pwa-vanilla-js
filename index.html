@@ -4,92 +4,116 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Supabase CRUD</title>
+  <title>PWA Vanilla JS</title>
 
-  <!-- Bootstrap -->
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  />
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.ico" />
 
-  <!-- Supabase -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0d6efd" />
 
+  <!-- Style -->
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+
+  <!-- Supabase CDN (ต้องอยู่ก่อน app.js) -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 
-<body class="p-4">
+<body>
 
-<div class="container">
+  <div class="app">
+    <h1>👋 Welcome</h1>
+    <h2>🚀 PWA Vanilla JS</h2>
 
-  <h2 class="mb-3">📦 Supabase Data</h2>
+    <p id="status" class="status">Offline Ready</p>
 
-  <!-- Action Buttons -->
-  <div class="mb-3">
-    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addModal">
-      ➕ Add Item
-    </button>
+    <button id="btn" class="btn btn-secondary me-2">Click Me</button>
 
-    <button class="btn btn-outline-secondary ms-2" onclick="exportCSV()">
-      ⬇ Export CSV
-    </button>
-
-    <button class="btn btn-primary ms-2" onclick="loadData()">
-      🔄 Load Data
+    <button id="installBtn" class="btn btn-success install hidden">
+      📲 Install App
     </button>
   </div>
 
-  <!-- Table -->
-  <table class="table table-bordered">
-    <thead class="table-dark">
-      <tr>
-        <th>#</th>
-        <th>Name</th>
-        <th>Created At</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-  </table>
+  <hr />
 
-</div>
-
-<!-- ================= MODAL ADD ITEM ================= -->
-<div class="modal fade" id="addModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-
-      <div class="modal-header">
-        <h5 class="modal-title">➕ Add Item</h5>
-        <button class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-
-      <div class="modal-body">
-        <input
-          id="itemName"
-          class="form-control"
-          placeholder="Enter name"
-        />
-        <div id="modalMessage" class="text-muted mt-2"></div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">
-          Cancel
-        </button>
-        <button class="btn btn-primary" onclick="addItem()">
-          Save
-        </button>
-      </div>
-
+  <!-- Demo Input -->
+  <div class="mb-3">
+    <label for="username" class="form-label">Username:</label>
+    <div class="input-group">
+      <input id="username" type="text" class="form-control" placeholder="Enter name" />
+      <button id="helloBtn" class="btn btn-primary">Hello user</button>
     </div>
   </div>
-</div>
+  <div id="greeting" class="alert alert-info d-none" aria-live="polite"></div>
 
-<!-- Scripts -->
-<script type="module" src="supabase.js"></script>
-<script type="module" src="crud.js"></script>
+  <hr />
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Supabase Data -->
+  <h3>📦 Supabase Data</h3>
+
+  <!-- Search and Filter -->
+  <div class="row mb-3" style="border: 2px solid #007bff; padding: 15px; background-color: #e7f3ff; border-radius: 5px;">
+    <div class="col-md-8">
+      <div class="input-group">
+        <span class="input-group-text bg-primary text-white">🔍</span>
+        <input type="text" id="searchInput" class="form-control" placeholder="Search names, dates, or any text..." />
+        <button class="btn btn-outline-danger" type="button" id="clearSearchBtn" title="Clear search">
+          ✕
+        </button>
+      </div>
+    </div>
+    <div class="col-md-4 text-end">
+      <small class="text-muted fw-bold" id="resultCount">Ready to search...</small>
+    </div>
+  </div>
+
+  <button id="loadDataBtn" class="btn btn-primary mb-3">Load Data</button>
+
+  <div id="dataContainer">
+    <div id="loadingSpinner" class="d-none">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <span class="ms-2">Loading data...</span>
+    </div>
+
+    <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
+
+    <div id="tableContainer" class="table-responsive d-none">
+      <table id="dataTable" class="table table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th scope="col" class="sortable" data-column="index">#</th>
+            <th scope="col" class="sortable" data-column="name">Name <span class="sort-indicator"></span></th>
+            <th scope="col" class="sortable" data-column="created_at">Created At <span class="sort-indicator"></span></th>
+            <th scope="col" class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="dataTableBody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- App Logic -->
+  <script src="app.js"></script>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+  <!-- Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
 
 </body>
 </html>
