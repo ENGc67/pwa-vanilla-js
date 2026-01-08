@@ -404,6 +404,34 @@ if (loadBtn) {
   loadBtn.addEventListener('click', loadData);
 }
 
+// ปุ่ม Add Item
+const addItemBtn = document.getElementById('addItemBtn');
+if (addItemBtn) {
+  addItemBtn.addEventListener('click', async () => {
+    const name = prompt('Enter item name:');
+    if (!name || !name.trim()) return;
+
+    const { error } = await db
+      .from('ID')
+      .insert([{ NAME: name.trim() }]);
+
+    if (error) {
+      console.error(error);
+      alert('Error adding item: ' + error.message);
+      return;
+    }
+
+    alert('Item added successfully!');
+    loadData(); // Reload data
+  });
+}
+
+// ปุ่ม Download CSV
+const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+if (downloadCsvBtn) {
+  downloadCsvBtn.addEventListener('click', downloadCSV);
+}
+
 /****************************
  * Table Sorting and Filtering
  ****************************/
@@ -437,9 +465,76 @@ if (clearSearchBtn) {
 }
 
 
-/****************************
- * Supabase INSERT
- ****************************/
+function downloadCSV() {
+  if (originalData.length === 0) {
+    alert('No data to download!');
+    return;
+  }
+
+  // Get filtered data (same logic as displayData)
+  let filteredData = originalData.filter(item => {
+    if (!currentFilter) return true;
+
+    const searchTerm = currentFilter.toLowerCase();
+
+    const searchableFields = [
+      item.NAME || '',
+      new Date(item.created_at).toLocaleString(),
+      new Date(item.created_at).toLocaleDateString(),
+      new Date(item.created_at).toLocaleTimeString(),
+      item.created_at,
+    ];
+
+    return searchableFields.some(field =>
+      field.toString().toLowerCase().includes(searchTerm)
+    );
+  });
+
+  // Sort data (same as displayData)
+  filteredData.sort((a, b) => {
+    let aVal, bVal;
+
+    switch (currentSort.column) {
+      case 'index':
+        aVal = originalData.indexOf(a);
+        bVal = originalData.indexOf(b);
+        break;
+      case 'name':
+        aVal = (a.NAME || '').toLowerCase();
+        bVal = (b.NAME || '').toLowerCase();
+        break;
+      case 'created_at':
+        aVal = new Date(a.created_at);
+        bVal = new Date(b.created_at);
+        break;
+      default:
+        return 0;
+    }
+
+    if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
+    if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  // Create CSV content
+  let csv = 'Index,Name,Created At\n';
+  filteredData.forEach((item, index) => {
+    const name = item.NAME || 'N/A';
+    const createdAt = new Date(item.created_at).toLocaleString();
+    csv += `${index + 1},"${name.replace(/"/g, '""')}","${createdAt}"\n`;
+  });
+
+  // Download CSV
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', 'data.csv');
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
 
 document.getElementById('helloBtn').addEventListener('click', async () => {
   const input = document.getElementById('username');
@@ -490,3 +585,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadData();
 });
+
+
+
+
+
+
+
+
+
+
