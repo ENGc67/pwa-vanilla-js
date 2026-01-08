@@ -176,7 +176,7 @@ function displayData() {
   if (pagedData.length === 0) {
     const emptyRow = document.createElement('tr');
     const emptyCell = document.createElement('td');
-    emptyCell.colSpan = 4; // Updated to 4 columns (added Actions)
+    emptyCell.colSpan = 5; // Updated to 5 columns (added expand column)
     emptyCell.className = 'text-center text-muted py-4';
     emptyCell.innerHTML = currentFilter
       ? `<em>No records match your search for "${currentFilter}"</em>`
@@ -187,6 +187,17 @@ function displayData() {
     pagedData.forEach((item, index) => {
       const row = document.createElement('tr');
       row.dataset.id = item.id; // Store the record ID for edit/delete operations
+
+      // Expand/collapse button column
+      const expandCell = document.createElement('td');
+      expandCell.className = 'text-center';
+      const expandBtn = document.createElement('button');
+      expandBtn.className = 'btn btn-sm btn-outline-secondary expand-btn';
+      expandBtn.innerHTML = '➕';
+      expandBtn.title = 'Show Details';
+      expandBtn.onclick = () => toggleDetails(row, item);
+      expandCell.appendChild(expandBtn);
+      row.appendChild(expandCell);
 
       const indexCell = document.createElement('th');
       indexCell.scope = 'row';
@@ -851,6 +862,87 @@ function renderPagination(filteredData) {
 
 function resetPagination() {
   currentPage = 1;
+}
+
+/****************************
+ * Expandable Details Functions
+ ****************************/
+
+function toggleDetails(row, item) {
+  const expandBtn = row.querySelector('.expand-btn');
+  const existingDetailRow = row.nextElementSibling;
+
+  // If detail row exists, remove it (collapse)
+  if (existingDetailRow && existingDetailRow.classList.contains('detail-row')) {
+    existingDetailRow.remove();
+    expandBtn.innerHTML = '➕';
+    expandBtn.title = 'Show Details';
+    return;
+  }
+
+  // Create detail row
+  const detailRow = document.createElement('tr');
+  detailRow.className = 'detail-row';
+  detailRow.style.backgroundColor = '#f8f9fa';
+
+  const detailCell = document.createElement('td');
+  detailCell.colSpan = 5; // Span all columns
+  detailCell.className = 'p-3';
+
+  // Create detail content
+  const detailContent = document.createElement('div');
+  detailContent.className = 'detail-content';
+
+  // Header information
+  const headerInfo = document.createElement('div');
+  headerInfo.className = 'row mb-3';
+  headerInfo.innerHTML = `
+    <div class="col-md-6">
+      <h6 class="text-primary mb-2">📋 Record Details</h6>
+      <table class="table table-sm table-borderless">
+        <tr>
+          <td class="fw-bold" style="width: 120px;">ID:</td>
+          <td><code>${item.id}</code></td>
+        </tr>
+        <tr>
+          <td class="fw-bold">Name:</td>
+          <td>${item.NAME || 'N/A'}</td>
+        </tr>
+        <tr>
+          <td class="fw-bold">Created:</td>
+          <td>${new Date(item.created_at).toLocaleString()}</td>
+        </tr>
+      </table>
+    </div>
+    <div class="col-md-6">
+      <h6 class="text-primary mb-2">📊 Additional Information</h6>
+      <table class="table table-sm table-borderless">
+        <tr>
+          <td class="fw-bold" style="width: 120px;">Timestamp:</td>
+          <td><small>${item.created_at}</small></td>
+        </tr>
+        <tr>
+          <td class="fw-bold">Days Since:</td>
+          <td>${Math.floor((new Date() - new Date(item.created_at)) / (1000 * 60 * 60 * 24))} days ago</td>
+        </tr>
+        <tr>
+          <td class="fw-bold">Status:</td>
+          <td><span class="badge bg-success">Active</span></td>
+        </tr>
+      </table>
+    </div>
+  `;
+
+  detailContent.appendChild(headerInfo);
+  detailCell.appendChild(detailContent);
+  detailRow.appendChild(detailCell);
+
+  // Insert detail row after the current row
+  row.parentNode.insertBefore(detailRow, row.nextSibling);
+
+  // Update button
+  expandBtn.innerHTML = '➖';
+  expandBtn.title = 'Hide Details';
 }
 
 /****************************
