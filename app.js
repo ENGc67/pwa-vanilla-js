@@ -56,6 +56,8 @@ const db = window.supabase.createClient(
 let originalData = [];
 let currentSort = { column: 'created_at', direction: 'desc' };
 let currentFilter = '';
+let currentPage = 1;
+let itemsPerPage = 10;
 
 /****************************
  * Supabase READ
@@ -89,7 +91,8 @@ async function loadData() {
   // Store original data
   originalData = data;
 
-  // Apply current sort and filter
+  // Reset pagination and apply current sort and filter
+  resetPagination();
   displayData();
 
   tableContainer.classList.remove('d-none');
@@ -157,12 +160,20 @@ function displayData() {
     resultCount.textContent = `No results found for "${currentFilter}"`;
     resultCount.className = 'text-warning';
   } else {
-    resultCount.textContent = `Showing ${filteredData.length} of ${originalData.length} records`;
+    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+    const startItem = (currentPage - 1) * itemsPerPage + 1;
+    const endItem = Math.min(currentPage * itemsPerPage, filteredData.length);
+    resultCount.textContent = `Showing ${startItem}-${endItem} of ${filteredData.length} records (Page ${currentPage} of ${totalPages})`;
     resultCount.className = 'text-muted';
   }
 
+  // Apply paging
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const pagedData = filteredData.slice(startIndex, endIndex);
+
   // Populate table
-  if (filteredData.length === 0) {
+  if (pagedData.length === 0) {
     const emptyRow = document.createElement('tr');
     const emptyCell = document.createElement('td');
     emptyCell.colSpan = 4; // Updated to 4 columns (added Actions)
@@ -173,13 +184,13 @@ function displayData() {
     emptyRow.appendChild(emptyCell);
     dataTableBody.appendChild(emptyRow);
   } else {
-    filteredData.forEach((item, index) => {
+    pagedData.forEach((item, index) => {
       const row = document.createElement('tr');
       row.dataset.id = item.id; // Store the record ID for edit/delete operations
 
       const indexCell = document.createElement('th');
       indexCell.scope = 'row';
-      indexCell.textContent = index + 1;
+      indexCell.textContent = (currentPage - 1) * itemsPerPage + index + 1;
       row.appendChild(indexCell);
 
       const nameCell = document.createElement('td');
@@ -215,6 +226,9 @@ function displayData() {
       dataTableBody.appendChild(row);
     });
   }
+
+  // Render pagination controls
+  renderPagination(filteredData);
 }
 
 function sortData(column) {
@@ -235,18 +249,21 @@ function sortData(column) {
   const header = document.querySelector(`[data-column="${column}"]`);
   header.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
 
-  // Redisplay data
+  // Reset pagination and redisplay data
+  resetPagination();
   displayData();
 }
 
 function filterData() {
   currentFilter = document.getElementById('searchInput').value.trim();
+  resetPagination();
   displayData();
 }
 
 function clearSearch() {
   document.getElementById('searchInput').value = '';
   currentFilter = '';
+  resetPagination();
   displayData();
 }
 
@@ -464,6 +481,16 @@ if (clearSearchBtn) {
   clearSearchBtn.addEventListener('click', clearSearch);
 }
 
+// Items per page selector
+const itemsPerPageSelect = document.getElementById('itemsPerPageSelect');
+if (itemsPerPageSelect) {
+  itemsPerPageSelect.addEventListener('change', (e) => {
+    itemsPerPage = parseInt(e.target.value);
+    resetPagination();
+    displayData();
+  });
+}
+
 
 function downloadCSV() {
   if (originalData.length === 0) {
@@ -571,6 +598,147 @@ document.getElementById('helloBtn').addEventListener('click', async () => {
   loadData();
 });
 
+
+/****************************
+ * Pagination Functions
+ ****************************/
+
+function renderPagination(filteredData) {
+  const paginationContainer = document.getElementById('paginationContainer');
+  const paginationControls = document.getElementById('paginationControls');
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+  // Hide pagination if only one page or no data
+  if (totalPages <= 1) {
+    paginationContainer.classList.add('d-none');
+    return;
+  }
+
+  paginationContainer.classList.remove('d-none');
+
+  // Clear existing controls
+  paginationControls.innerHTML = '';
+
+  // Previous button
+  const prevLi = document.createElement('li');
+  prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+  const prevLink = document.createElement('a');
+  prevLink.className = 'page-link';
+  prevLink.href = '#';
+  prevLink.innerHTML = 'Previous';
+  prevLink.onclick = (e) => {
+    e.preventDefault();
+    if (currentPage > 1) {
+      currentPage--;
+      displayData();
+    }
+  };
+  prevLi.appendChild(prevLink);
+  paginationControls.appendChild(prevLi);
+
+  // Page numbers
+  const maxVisiblePages = 5;
+  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+  // Adjust start page if we're near the end
+  if (endPage - startPage + 1 < maxVisiblePages) {
+    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+  }
+
+  // First page + ellipsis if needed
+  if (startPage > 1) {
+    const firstLi = document.createElement('li');
+    firstLi.className = 'page-item';
+    const firstLink = document.createElement('a');
+    firstLink.className = 'page-link';
+    firstLink.href = '#';
+    firstLink.textContent = '1';
+    firstLink.onclick = (e) => {
+      e.preventDefault();
+      currentPage = 1;
+      displayData();
+    };
+    firstLi.appendChild(firstLink);
+    paginationControls.appendChild(firstLi);
+
+    if (startPage > 2) {
+      const ellipsisLi = document.createElement('li');
+      ellipsisLi.className = 'page-item disabled';
+      const ellipsisSpan = document.createElement('span');
+      ellipsisSpan.className = 'page-link';
+      ellipsisSpan.textContent = '...';
+      ellipsisLi.appendChild(ellipsisSpan);
+      paginationControls.appendChild(ellipsisLi);
+    }
+  }
+
+  // Visible page numbers
+  for (let i = startPage; i <= endPage; i++) {
+    const pageLi = document.createElement('li');
+    pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
+    const pageLink = document.createElement('a');
+    pageLink.className = 'page-link';
+    pageLink.href = '#';
+    pageLink.textContent = i;
+    pageLink.onclick = (e) => {
+      e.preventDefault();
+      currentPage = i;
+      displayData();
+    };
+    pageLi.appendChild(pageLink);
+    paginationControls.appendChild(pageLi);
+  }
+
+  // Last page + ellipsis if needed
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
+      const ellipsisLi = document.createElement('li');
+      ellipsisLi.className = 'page-item disabled';
+      const ellipsisSpan = document.createElement('span');
+      ellipsisSpan.className = 'page-link';
+      ellipsisSpan.textContent = '...';
+      ellipsisLi.appendChild(ellipsisSpan);
+      paginationControls.appendChild(ellipsisLi);
+    }
+
+    const lastLi = document.createElement('li');
+    lastLi.className = 'page-item';
+    const lastLink = document.createElement('a');
+    lastLink.className = 'page-link';
+    lastLink.href = '#';
+    lastLink.textContent = totalPages;
+    lastLink.onclick = (e) => {
+      e.preventDefault();
+      currentPage = totalPages;
+      displayData();
+    };
+    lastLi.appendChild(lastLink);
+    paginationControls.appendChild(lastLi);
+  }
+
+  // Next button
+  const nextLi = document.createElement('li');
+  nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+  const nextLink = document.createElement('a');
+  nextLink.className = 'page-link';
+  nextLink.href = '#';
+  nextLink.innerHTML = 'Next';
+  nextLink.onclick = (e) => {
+    e.preventDefault();
+    if (currentPage < totalPages) {
+      currentPage++;
+      displayData();
+    }
+  };
+  nextLi.appendChild(nextLink);
+  paginationControls.appendChild(nextLi);
+}
+
+function resetPagination() {
+  currentPage = 1;
+}
 
 /****************************
  * Auto load data on start

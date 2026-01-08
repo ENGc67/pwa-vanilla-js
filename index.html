@@ -58,7 +58,7 @@
 
   <!-- Search and Filter -->
   <div class="row mb-3" style="border: 2px solid #007bff; padding: 15px; background-color: #e7f3ff; border-radius: 5px;">
-    <div class="col-md-8">
+    <div class="col-md-6">
       <div class="input-group">
         <span class="input-group-text bg-primary text-white">🔍</span>
         <input type="text" id="searchInput" class="form-control" placeholder="Search names, dates, or any text..." />
@@ -67,7 +67,19 @@
         </button>
       </div>
     </div>
-    <div class="col-md-4 text-end">
+    <div class="col-md-3">
+      <div class="input-group">
+        <span class="input-group-text bg-info text-white">📄</span>
+        <select id="itemsPerPageSelect" class="form-select">
+          <option value="5">5 per page</option>
+          <option value="10" selected>10 per page</option>
+          <option value="25">25 per page</option>
+          <option value="50">50 per page</option>
+          <option value="100">100 per page</option>
+        </select>
+      </div>
+    </div>
+    <div class="col-md-3 text-end">
       <small class="text-muted fw-bold" id="resultCount">Ready to search...</small>
     </div>
   </div>
@@ -101,6 +113,15 @@
         </tbody>
       </table>
     </div>
+  </div>
+
+  <!-- Pagination Controls -->
+  <div id="paginationContainer" class="d-none mt-3">
+    <nav aria-label="Data table pagination">
+      <ul class="pagination justify-content-center" id="paginationControls">
+        <!-- Pagination buttons will be generated here -->
+      </ul>
+    </nav>
   </div>
 
 
