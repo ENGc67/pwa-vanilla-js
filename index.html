@@ -22,6 +22,9 @@
 
   <!-- Supabase CDN (ต้องอยู่ก่อน app.js) -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+  <!-- jsPDF for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
 <body>
@@ -87,7 +90,15 @@
   <button id="loadDataBtn" class="btn btn-primary mb-3">Load Data</button>
 
   <button id="addItemBtn" class="btn btn-success mb-3 me-2">➕ Add Item</button>
-  <button id="downloadCsvBtn" class="btn btn-info mb-3">📥 Download CSV</button>
+  <div class="btn-group mb-3" role="group">
+    <button id="downloadBtn" class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+      📥 Download
+    </button>
+    <ul class="dropdown-menu">
+      <li><a class="dropdown-item" href="#" id="downloadCsvBtn">📄 CSV</a></li>
+      <li><a class="dropdown-item" href="#" id="downloadPdfBtn">📕 PDF</a></li>
+    </ul>
+  </div>
 
   <div id="dataContainer">
     <div id="loadingSpinner" class="d-none">

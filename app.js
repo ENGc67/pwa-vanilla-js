@@ -446,7 +446,19 @@ if (addItemBtn) {
 // ปุ่ม Download CSV
 const downloadCsvBtn = document.getElementById('downloadCsvBtn');
 if (downloadCsvBtn) {
-  downloadCsvBtn.addEventListener('click', downloadCSV);
+  downloadCsvBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    downloadCSV();
+  });
+}
+
+// ปุ่ม Download PDF
+const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+if (downloadPdfBtn) {
+  downloadPdfBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    downloadPDF();
+  });
 }
 
 /****************************
@@ -561,6 +573,107 @@ function downloadCSV() {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+}
+
+function downloadPDF() {
+  if (originalData.length === 0) {
+    alert('No data to download!');
+    return;
+  }
+
+  // Get filtered data (same logic as displayData)
+  let filteredData = originalData.filter(item => {
+    if (!currentFilter) return true;
+
+    const searchTerm = currentFilter.toLowerCase();
+
+    const searchableFields = [
+      item.NAME || '',
+      new Date(item.created_at).toLocaleString(),
+      new Date(item.created_at).toLocaleDateString(),
+      new Date(item.created_at).toLocaleTimeString(),
+      item.created_at,
+    ];
+
+    return searchableFields.some(field =>
+      field.toString().toLowerCase().includes(searchTerm)
+    );
+  });
+
+  // Sort data (same as displayData)
+  filteredData.sort((a, b) => {
+    let aVal, bVal;
+
+    switch (currentSort.column) {
+      case 'index':
+        aVal = originalData.indexOf(a);
+        bVal = originalData.indexOf(b);
+        break;
+      case 'name':
+        aVal = (a.NAME || '').toLowerCase();
+        bVal = (b.NAME || '').toLowerCase();
+        break;
+      case 'created_at':
+        aVal = new Date(a.created_at);
+        bVal = new Date(b.created_at);
+        break;
+      default:
+        return 0;
+    }
+
+    if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
+    if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  // Create PDF
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  // Add title
+  doc.setFontSize(18);
+  doc.text('Data Export', 14, 20);
+
+  // Add metadata
+  doc.setFontSize(12);
+  doc.text(`Total Records: ${filteredData.length}`, 14, 30);
+  doc.text(`Export Date: ${new Date().toLocaleString()}`, 14, 38);
+  if (currentFilter) {
+    doc.text(`Filter: "${currentFilter}"`, 14, 46);
+  }
+
+  // Add table headers
+  const headers = ['#', 'Name', 'Created At'];
+  let yPosition = currentFilter ? 60 : 50;
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  headers.forEach((header, index) => {
+    doc.text(header, 14 + (index * 50), yPosition);
+  });
+
+  // Add table data
+  doc.setFont('helvetica', 'normal');
+  yPosition += 8;
+
+  filteredData.forEach((item, index) => {
+    if (yPosition > 270) { // New page if needed
+      doc.addPage();
+      yPosition = 20;
+    }
+
+    const name = item.NAME || 'N/A';
+    const createdAt = new Date(item.created_at).toLocaleString();
+
+    doc.text(`${index + 1}`, 14, yPosition);
+    doc.text(name.length > 15 ? name.substring(0, 15) + '...' : name, 14 + 50, yPosition);
+    doc.text(createdAt, 14 + 100, yPosition);
+
+    yPosition += 6;
+  });
+
+  // Download PDF
+  doc.save('data.pdf');
 }
 
 document.getElementById('helloBtn').addEventListener('click', async () => {
