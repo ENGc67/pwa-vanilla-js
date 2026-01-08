@@ -588,7 +588,7 @@ function downloadCSV() {
 
 function downloadPDF() {
   if (originalData.length === 0) {
-    alert('No data to download!');
+    showWarningToast('No data to download!');
     return;
   }
 
