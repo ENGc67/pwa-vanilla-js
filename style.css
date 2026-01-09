@@ -1,67 +1,58 @@
 /* =========================
-   GLOBAL LAYOUT
+   DESIGN TOKENS (UNTITLED UI)
+   ========================= */
+
+:root {
+  --ui-bg: #f9fafb;
+  --ui-card: #ffffff;
+  --ui-border: #e5e7eb;
+  --ui-text: #111827;
+  --ui-muted: #6b7280;
+
+  --ui-primary: #2563eb;
+  --ui-danger: #dc2626;
+  --ui-success: #16a34a;
+  --ui-warning: #f59e0b;
+
+  --ui-radius: 12px;
+  --ui-radius-sm: 8px;
+  --ui-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --ui-shadow-hover: 0 4px 12px rgba(16, 24, 40, 0.1);
+}
+
+/* =========================
+   GLOBAL
    ========================= */
 
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  background: linear-gradient(135deg, #0d6efd, #6f42c1);
-  padding: 20px;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  background-color: var(--ui-bg);
+  color: var(--ui-text);
+  padding: 24px;
 }
 
-/* =========================
-   APP CARD
-   ========================= */
-
-.app {
-  background: #ffffff;
-  padding: 40px 30px;
-  border-radius: 16px;
-  max-width: 900px;
-  margin: 0 auto 30px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-
-h1 {
-  margin: 0;
-  font-size: 28px;
-}
-
-h2 {
-  margin: 10px 0 20px;
-  font-size: 20px;
-  color: #555;
-}
-
-.status {
-  margin-bottom: 20px;
-  font-weight: bold;
-}
-
-.install {
-  background: #198754;
-  color: white;
-}
-
+/* utility */
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 /* =========================
-   SUPABASE DATA SECTION
+   CARD / SECTION
    ========================= */
 
 #tableContainer {
-  background: #ffffff;
+  background: var(--ui-card);
   padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  border-radius: var(--ui-radius);
+  border: 1px solid var(--ui-border);
+  box-shadow: var(--ui-shadow);
 }
 
 /* =========================
-   TABLE STYLE (CRUD TEMPLATE)
+   TABLE
    ========================= */
 
 #dataTable {
@@ -70,95 +61,78 @@ h2 {
   border-spacing: 0;
 }
 
-/* Table header */
 #dataTable thead th {
-  background-color: #f1f3f5;
-  color: #333;
+  background-color: #f3f4f6;
+  color: #374151;
   font-weight: 600;
-  border-bottom: 2px solid #dee2e6;
+  font-size: 14px;
+  border-bottom: 1px solid var(--ui-border);
   padding: 12px;
   white-space: nowrap;
 }
 
-/* Index column */
-#dataTable th[scope="row"] {
-  width: 60px;
-  color: #555;
-}
-
-/* Zebra rows */
-#dataTable tbody tr:nth-child(odd) {
-  background-color: #f8f9fa;
-}
-
-#dataTable tbody tr:nth-child(even) {
-  background-color: #ffffff;
-}
-
-/* Hover effect */
-#dataTable tbody tr:hover {
-  background-color: #e9ecef;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
-}
-
-/* Table cells */
 #dataTable td,
 #dataTable th {
   padding: 12px;
   vertical-align: middle;
+  font-size: 14px;
+}
+
+#dataTable tbody tr {
+  transition: background 0.15s ease;
+}
+
+#dataTable tbody tr:hover {
+  background-color: #f9fafb;
 }
 
 /* =========================
-   ACTION BUTTONS
+   BUTTONS (BOOTSTRAP OVERRIDE)
    ========================= */
 
-#dataTable .btn {
-  transition: all 0.2s ease;
-  font-size: 0.85rem;
+.btn {
+  border-radius: var(--ui-radius-sm) !important;
+  font-weight: 500;
+  transition: all 0.15s ease;
 }
 
-#dataTable .btn:hover {
-  transform: scale(1.05);
+.btn:hover {
+  box-shadow: var(--ui-shadow-hover);
 }
 
-/* Edit */
-#dataTable .btn-warning {
-  background-color: #ffc107;
-  border-color: #ffc107;
+.btn-primary {
+  background-color: var(--ui-primary);
+  border-color: var(--ui-primary);
+}
+
+.btn-danger {
+  background-color: var(--ui-danger);
+  border-color: var(--ui-danger);
+}
+
+.btn-success {
+  background-color: var(--ui-success);
+  border-color: var(--ui-success);
+}
+
+.btn-warning {
+  background-color: var(--ui-warning);
+  border-color: var(--ui-warning);
   color: #000;
 }
 
-#dataTable .btn-warning:hover {
-  background-color: #fd7e14;
-  border-color: #fd7e14;
+.btn-outline-secondary {
+  border-color: var(--ui-border);
 }
 
-/* Delete */
-#dataTable .btn-danger {
-  background-color: #dc3545;
-  border-color: #dc3545;
-}
+/* =========================
+   EDIT INPUT
+   ========================= */
 
-#dataTable .btn-danger:hover {
-  background-color: #c82333;
-  border-color: #c82333;
-}
-
-/* Save / Cancel */
-#dataTable .btn-success:hover {
-  background-color: #157347;
-}
-
-#dataTable .btn-secondary:hover {
-  background-color: #5c636a;
-}
-
-/* Edit input */
 #dataTable input.form-control-sm {
-  font-size: 0.9rem;
-  padding: 4px 8px;
+  font-size: 14px;
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-border);
 }
 
 /* =========================
@@ -168,15 +142,14 @@ h2 {
 .sortable {
   cursor: pointer;
   user-select: none;
-  position: relative;
 }
 
 .sortable:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(0, 0, 0, 0.03);
 }
 
 .sort-indicator {
-  margin-left: 5px;
+  margin-left: 6px;
   opacity: 0.4;
 }
 
@@ -199,29 +172,29 @@ h2 {
    ========================= */
 
 .row.mb-3 {
-  margin-top: 20px !important;
-  margin-bottom: 20px !important;
-  border: 1px solid #0d6efd;
-  border-radius: 10px;
-  padding: 15px;
-  background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-top: 24px !important;
+  margin-bottom: 24px !important;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius);
+  padding: 16px;
+  background: var(--ui-card);
 }
 
-#searchInput {
-  border-radius: 0;
+#searchInput,
+.form-select {
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-border);
+}
+
+#searchInput:focus {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 #clearSearchBtn {
-  opacity: 0.5;
-  transition: opacity 0.2s;
+  opacity: 0.4;
 }
 
 #clearSearchBtn:hover {
-  opacity: 1;
-}
-
-#searchInput:not(:placeholder-shown) + #clearSearchBtn {
   opacity: 1;
 }
 
@@ -232,30 +205,12 @@ h2 {
 #loadingSpinner {
   display: flex;
   align-items: center;
-  padding: 20px;
+  padding: 16px;
 }
 
 .alert {
-  margin-top: 10px;
-}
-
-/* =========================
-   RESPONSIVE
-   ========================= */
-
-@media (max-width: 768px) {
-  .app {
-    padding: 30px 20px;
-  }
-
-  #dataTable th,
-  #dataTable td {
-    font-size: 0.85rem;
-  }
-
-  #dataTable .btn {
-    margin-bottom: 4px;
-  }
+  margin-top: 12px;
+  border-radius: var(--ui-radius-sm);
 }
 
 /* =========================
@@ -263,23 +218,17 @@ h2 {
    ========================= */
 
 .detail-row {
-  border-left: 3px solid #0d6efd;
-  border-right: 3px solid #0d6efd;
-}
-
-.detail-row td {
-  border-top: none !important;
-  border-bottom: 2px solid #0d6efd;
+  background-color: #f9fafb;
 }
 
 .detail-content {
-  animation: slideDown 0.3s ease-out;
+  animation: fadeIn 0.2s ease-out;
 }
 
-@keyframes slideDown {
+@keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-6px);
   }
   to {
     opacity: 1;
@@ -288,36 +237,19 @@ h2 {
 }
 
 .expand-btn {
-  width: 30px;
-  height: 30px;
-  padding: 0;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  transition: all 0.2s ease;
+  font-size: 13px;
 }
 
 .expand-btn:hover {
-  transform: scale(1.1);
-  background-color: #0d6efd !important;
+  background-color: var(--ui-primary) !important;
   color: white !important;
 }
 
-.detail-content .table-sm td {
-  padding: 0.25rem 0.5rem;
-}
-
-.detail-content code {
-  background-color: #f1f3f4;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 0.85em;
-}
-
 /* =========================
-   TOAST NOTIFICATIONS
+   TOAST
    ========================= */
 
 .toast-container {
@@ -325,35 +257,13 @@ h2 {
 }
 
 .toast {
-  border: none;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-sm);
+  box-shadow: var(--ui-shadow-hover);
   backdrop-filter: blur(10px);
-  margin-bottom: 0.5rem;
 }
 
 .toast .toast-body {
   font-weight: 500;
-  padding: 0.75rem 1rem;
-}
-
-.toast.bg-success {
-  background-color: #198754 !important;
-}
-
-.toast.bg-danger {
-  background-color: #dc3545 !important;
-}
-
-.toast.bg-warning {
-  background-color: #ffc107 !important;
-  color: #000 !important;
-}
-
-.toast.bg-warning .btn-close {
-  filter: invert(1);
-}
-
-.toast.bg-info {
-  background-color: #0dcaf0 !important;
+  font-size: 14px;
 }
