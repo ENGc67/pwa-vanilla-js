@@ -51,36 +51,177 @@
 }
 
 /* โหมดมด (Dark Mode) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+.dark-mode {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+  --primary: 210 40% 98%;
+  --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 212.7 26.8% 83.9%;
+}
+
+/* Dark Mode Toggle Button */
+.dark-mode-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10000;
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 50%;
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: hsl(var(--foreground));
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px 0 rgb(0 0 0 / 0.1);
+}
+
+.dark-mode-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px 0 rgb(0 0 0 / 0.15);
+}
+
+.dark-mode-toggle:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.dark-mode-toggle:active {
+  transform: scale(0.95);
+}
+
+/* =========================================================
+   ✨ ANIMATIONS & TRANSITIONS
+   ========================================================= */
+
+/* Fade in animation for page load */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Shake animation for errors */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+  20%, 40%, 60%, 80% { transform: translateX(10px); }
+}
+
+/* Pulse animation */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px hsl(var(--primary) / 0);
+  }
+}
+
+/* Rotate animation */
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Apply animations */
+.login-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.form-control,
+.btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px 0 rgb(0 0 0 / 0.15);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+/* Error shake */
+.shake {
+  animation: shake 0.5s;
+}
+
+/* Success pulse */
+.pulse-success {
+  animation: pulseGlow 1s ease-out;
+}
+
+/* Loading spinner rotation */
+.spinner-border {
+  animation: rotate 0.75s linear infinite;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Hover effects for interactive elements */
+.sortable,
+.dropdown-item,
+a {
+  transition: all 0.2s ease;
+}
+
+.sortable:hover,
+.dropdown-item:hover {
+  transform: translateX(2px);
+}
+
+/* Focus ring animation */
+@keyframes focusRing {
+  0% {
+    box-shadow: 0 0 0 0 hsl(var(--ring) / 0.4);
+  }
+  100% {
+    box-shadow: 0 0 0 4px hsl(var(--ring) / 0);
+  }
+}
+
+.form-control:focus,
+.btn:focus {
+  animation: focusRing 0.6s ease-out;
 }
 
 /* =========================================================
@@ -107,6 +248,63 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* =========================================================
+   ♿ ACCESSIBILITY - Screen Reader & Skip Links
+   ========================================================= */
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Skip to main content link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  font-weight: 600;
+  z-index: 100000;
+  border-radius: 0 0 var(--radius) 0;
+  transition: top 0.3s ease;
+}
+
+.skip-link:focus {
+  top: 0;
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  * {
+    border-color: currentColor !important;
+  }
+  
+  .btn {
+    border: 2px solid currentColor !important;
+  }
+}
+
+/* Reduced transparency for better readability */
+@media (prefers-contrast: more) {
+  .modal-overlay {
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: none;
+  }
+}
+
 /* Typography - ตัวหนังสือ */
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
@@ -120,7 +318,76 @@ h2 { font-size: 1.875rem; }  /* 30px */
 h3 { font-size: 1.5rem; }    /* 24px */
 
 /* =========================================================
-   � LOGIN PAGE STYLES - หน้าล็อกอิน
+   ⌨️ KEYBOARD NAVIGATION & FOCUS STYLES
+   ========================================================= */
+
+/* Hide focus outline by default (mouse users) */
+*:focus {
+  outline: none;
+}
+
+/* Show enhanced focus outline only for keyboard users */
+.keyboard-navigation *:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Enhanced focus for form inputs when using keyboard */
+.keyboard-navigation .form-control:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px hsl(var(--ring) / 0.1);
+}
+
+/* Enhanced focus for buttons when using keyboard */
+.keyboard-navigation .btn:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px hsl(var(--ring) / 0.1);
+}
+
+/* Enhanced focus for links when using keyboard */
+.keyboard-navigation a:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  background-color: hsl(var(--muted) / 0.5);
+  border-radius: 4px;
+}
+
+/* Smooth focus transitions */
+.form-control,
+.btn,
+a,
+button {
+  transition: outline 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Keyboard hints styling */
+.keyboard-hints {
+  text-align: center;
+  padding: 0.75rem;
+  background-color: hsl(var(--muted) / 0.3);
+  border-radius: var(--radius);
+  border: 1px dashed hsl(var(--border));
+}
+
+.keyboard-hints kbd {
+  display: inline-block;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.75rem;
+  font-family: monospace;
+  font-weight: 600;
+  line-height: 1;
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  border-radius: 4px;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+/* =========================================================
+   🔐 LOGIN PAGE STYLES - หน้าล็อกอิน
    ========================================================= */
 
 .login-container {
@@ -235,6 +502,92 @@ h3 { font-size: 1.5rem; }    /* 24px */
   border: 1px solid #a7f3d0;
 }
 
+/* Password Requirements Tooltip */
+.info-icon {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: 0.25rem;
+  cursor: help;
+  color: hsl(var(--muted-foreground));
+  transition: color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.info-icon:hover {
+  color: hsl(var(--primary));
+}
+
+.password-requirements {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  box-shadow: 0 2px 4px 0 rgb(0 0 0 / 0.1);
+  font-size: 0.8125rem;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.requirements-header {
+  margin-bottom: 0.5rem;
+  color: hsl(var(--foreground));
+  font-size: 0.875rem;
+}
+
+.requirements-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.requirement-item {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0;
+  color: hsl(var(--muted-foreground));
+  transition: color 0.2s ease;
+}
+
+.requirement-item.met {
+  color: #059669;
+}
+
+.requirement-item.met .req-icon {
+  content: '✓';
+}
+
+.req-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.5rem;
+  font-weight: bold;
+}
+
+.requirement-item.met .req-icon::before {
+  content: '✓';
+}
+
+.requirement-item:not(.met) .req-icon::before {
+  content: '○';
+}
+
 /* OAuth Divider */
 .oauth-divider {
   position: relative;
@@ -269,6 +622,180 @@ h3 { font-size: 1.5rem; }    /* 24px */
 
 .btn.loading .btn-text {
   opacity: 0.6;
+}
+
+/* Forgot Password Link */
+.forgot-password-link {
+  font-size: 0.875rem;
+  color: hsl(var(--primary));
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.forgot-password-link:hover {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}
+
+/* Email Input with Validation */
+.email-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.email-input-wrapper .form-control {
+  padding-right: 3rem;
+}
+
+.email-validation-icon {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.email-validation-icon .check-icon {
+  color: #059669;
+}
+
+.email-validation-icon .x-icon {
+  color: #dc2626;
+}
+
+/* Email validation states */
+.form-control.email-valid {
+  border-color: #059669;
+  padding-right: 3rem;
+}
+
+.form-control.email-valid:focus {
+  border-color: #059669;
+  box-shadow: 0 0 0 0.25rem rgba(5, 150, 105, 0.15);
+}
+
+.form-control.email-invalid {
+  border-color: #dc2626;
+  padding-right: 3rem;
+}
+
+.form-control.email-invalid:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 0.25rem rgba(220, 38, 38, 0.15);
+}
+
+.email-error {
+  font-size: 0.75rem;
+  color: #dc2626;
+  margin-top: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* =========================================================
+   🪟 MODAL STYLES - หน้าต่าง Modal
+   ========================================================= */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) + 4px);
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 
+              0 10px 10px -5px rgb(0 0 0 / 0.04);
+  width: 100%;
+  max-width: 420px;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  color: hsl(var(--muted-foreground));
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.modal-close-btn:hover {
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--muted));
+}
+
+.modal-close-btn:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.w-100 {
+  width: 100%;
 }
 
 /* User Info Bar - แถบข้อมูลผู้ใช้ */
@@ -731,6 +1258,217 @@ h3 { font-size: 1.5rem; }    /* 24px */
 }
 
 /* =========================================================
+   📊 USER BAR & DROPDOWN MENU
+   ========================================================= */
+
+.user-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+.app-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.user-menu-wrapper {
+  position: relative;
+}
+
+.user-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  background: transparent;
+  border: 1px solid hsl(var(--border));
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: hsl(var(--foreground));
+  font-size: 0.875rem;
+}
+
+.user-menu-btn:hover {
+  background: hsl(var(--accent));
+  border-color: hsl(var(--primary) / 0.3);
+}
+
+.user-menu-btn .user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)) 50%, hsl(var(--accent)));
+  color: hsl(var(--primary-foreground));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.user-email {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron-icon {
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.user-menu-btn[aria-expanded="true"] .chevron-icon {
+  transform: rotate(180deg);
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 280px;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1),
+              0 20px 48px rgba(0, 0, 0, 0.1),
+              0 1px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  animation: dropdownSlide 0.2s ease-out;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-header {
+  padding: 1rem;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.dropdown-user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dropdown-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)) 50%, hsl(var(--accent)));
+  color: hsl(var(--primary-foreground));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.dropdown-user-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.dropdown-username {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: hsl(var(--foreground));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-user-meta {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  margin-top: 0.125rem;
+}
+
+.dropdown-section {
+  padding: 0.5rem;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: calc(var(--radius) - 2px);
+  text-decoration: none;
+  color: hsl(var(--foreground));
+  font-size: 0.875rem;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+.dropdown-item svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.dropdown-item:hover svg {
+  opacity: 1;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: hsl(var(--border));
+  margin: 0.5rem 0;
+}
+
+@media (max-width: 767.98px) {
+  .user-bar {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .user-menu-wrapper {
+    width: 100%;
+  }
+  
+  .user-menu-btn {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .user-dropdown {
+    left: 0;
+    right: 0;
+    min-width: auto;
+  }
+  
+  .user-email {
+    max-width: none;
+    flex: 1;
+  }
+}
+
+/* =========================================================
    🍞 TOAST NOTIFICATIONS - การแจ้งเตือนแบบทอสต์
    ========================================================= */
 
@@ -926,7 +1664,529 @@ hr {
 }
 
 /* =========================================================
-   🎨 CUSTOM INLINE STYLES OVERRIDE
+   � TOAST NOTIFICATIONS
+   ========================================================= */
+
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  pointer-events: none;
+  max-width: 420px;
+  width: 100%;
+}
+
+.toast {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  pointer-events: auto;
+  animation: slideInRight 0.3s ease-out;
+  transition: all 0.3s ease;
+}
+
+.toast:hover {
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.toast.toast-success {
+  border-left: 4px solid #10b981;
+}
+
+.toast.toast-error {
+  border-left: 4px solid #ef4444;
+}
+
+.toast.toast-warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.toast.toast-info {
+  border-left: 4px solid #3b82f6;
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.toast-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+  color: hsl(var(--foreground));
+}
+
+.toast-message {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.4;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.toast-close:hover {
+  background: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+.toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: hsl(var(--primary));
+  opacity: 0.5;
+  transition: width linear;
+}
+
+.toast.removing {
+  animation: slideOutRight 0.3s ease-in forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+/* =========================================================
+   👤 USER PROFILE
+   ========================================================= */
+
+.user-profile-btn {
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s;
+  color: hsl(var(--foreground));
+}
+
+.user-profile-btn:hover {
+  background: hsl(var(--accent));
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.profile-modal {
+  max-width: 500px;
+  width: 90%;
+}
+
+.profile-section {
+  text-align: center;
+  padding: 2rem 0;
+  border-bottom: 1px solid hsl(var(--border));
+  margin-bottom: 1.5rem;
+}
+
+.profile-avatar-large {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)) 50%, hsl(var(--accent)));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.profile-info h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: hsl(var(--foreground));
+}
+
+.profile-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: hsl(var(--accent));
+  border-radius: var(--radius);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-success {
+  background: #10b98133;
+  color: #10b981;
+}
+
+.badge-warning {
+  background: #f59e0b33;
+  color: #f59e0b;
+}
+
+.profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.avatar-picker {
+  text-align: center;
+  margin-top: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.avatar-options {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: hsl(var(--accent));
+  border-radius: var(--radius);
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+.avatar-option {
+  width: 48px;
+  height: 48px;
+  border: 2px solid hsl(var(--border));
+  background: hsl(var(--card));
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-option:hover {
+  border-color: hsl(var(--primary));
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.avatar-option:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 575.98px) {
+  .avatar-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .avatar-option {
+    width: 44px;
+    height: 44px;
+    font-size: 1.25rem;
+  }
+}
+
+/* =========================================================
+   � CHANGE PASSWORD MODAL
+   ========================================================= */
+
+.password-modal {
+  max-width: 460px;
+  width: 90%;
+}
+
+.password-input-wrapper {
+  position: relative;
+}
+
+.password-input-wrapper .form-control {
+  padding-right: 3rem;
+}
+
+.password-input-wrapper .password-toggle-btn {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.password-input-wrapper .password-toggle-btn:hover {
+  color: hsl(var(--foreground));
+}
+
+.password-strength-indicator {
+  padding: 0.75rem;
+  background: hsl(var(--accent));
+  border-radius: var(--radius);
+}
+
+.strength-bar {
+  width: 100%;
+  height: 6px;
+  background: hsl(var(--muted));
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0%;
+  transition: all 0.3s ease;
+  border-radius: 3px;
+}
+
+.strength-fill.weak {
+  width: 33%;
+  background: #ef4444;
+}
+
+.strength-fill.medium {
+  width: 66%;
+  background: #f59e0b;
+}
+
+.strength-fill.strong {
+  width: 100%;
+  background: #10b981;
+}
+
+.strength-text {
+  font-size: 0.875rem;
+  color: hsl(var(--foreground));
+}
+
+.strength-label {
+  font-weight: 600;
+}
+
+.strength-label.weak {
+  color: #ef4444;
+}
+
+.strength-label.medium {
+  color: #f59e0b;
+}
+
+.strength-label.strong {
+  color: #10b981;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.modal-actions .btn {
+  min-width: 100px;
+}
+
+.invalid-feedback {
+  display: none;
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.invalid-feedback.show {
+  display: block;
+}
+
+/* =========================================================
+   �💀 LOADING SKELETONS
+   ========================================================= */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--accent)) 50%,
+    hsl(var(--muted)) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-card {
+  padding: 2rem;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.skeleton-title {
+  height: 32px;
+  width: 60%;
+  margin-bottom: 1.5rem;
+}
+
+.skeleton-input {
+  height: 44px;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.skeleton-button {
+  height: 44px;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.skeleton-text {
+  height: 16px;
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton-text.short {
+  width: 40%;
+}
+
+.skeleton-text.medium {
+  width: 70%;
+}
+
+.skeleton-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.skeleton-table-row {
+  display: table-row;
+}
+
+.skeleton-table-cell {
+  display: table-cell;
+  padding: 1rem;
+  vertical-align: middle;
+}
+
+.skeleton-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.loading-container {
+  padding: 2rem;
+}
+
+/* =========================================================
+   �🎨 CUSTOM INLINE STYLES OVERRIDE
    ========================================================= */
 
 /* ลบ inline style ของ search bar ถ้าต้องการใช้ theme */

@@ -4,7 +4,214 @@
 document.addEventListener('DOMContentLoaded', () => {
 
 /****************************
- * 🔑 PASSWORD TOGGLE FUNCTIONALITY
+ * 📊 GLOBAL DATA VARIABLES
+ ****************************/
+
+// Global variables for data management
+let originalData = [];
+let currentSort = { column: 'created_at', direction: 'desc' };
+let currentFilter = '';
+let currentPage = 1;
+let itemsPerPage = 10;
+
+/****************************
+ * 🍞 TOAST NOTIFICATION SYSTEM
+ ****************************/
+
+let toastCounter = 0;
+
+function showToast(message, type = 'info', duration = 5000) {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+
+  const toastId = `toast-${++toastCounter}`;
+  
+  // Icon mapping
+  const icons = {
+    success: '✅',
+    error: '❌',
+    warning: '⚠️',
+    info: 'ℹ️'
+  };
+
+  // Title mapping
+  const titles = {
+    success: 'สำเร็จ',
+    error: 'เกิดข้อผิดพลาด',
+    warning: 'คำเตือน',
+    info: 'ข้อมูล'
+  };
+
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.id = toastId;
+  toast.setAttribute('role', 'alert');
+  toast.setAttribute('aria-live', 'polite');
+  
+  toast.innerHTML = `
+    <div class="toast-icon">${icons[type]}</div>
+    <div class="toast-content">
+      <div class="toast-title">${titles[type]}</div>
+      <div class="toast-message">${message}</div>
+    </div>
+    <button class="toast-close" aria-label="ปิด" type="button">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  `;
+
+  // Add progress bar if duration is set
+  if (duration > 0) {
+    const progress = document.createElement('div');
+    progress.className = 'toast-progress';
+    progress.style.width = '100%';
+    toast.appendChild(progress);
+    
+    // Animate progress
+    setTimeout(() => {
+      progress.style.width = '0%';
+      progress.style.transition = `width ${duration}ms linear`;
+    }, 10);
+  }
+
+  // Close button handler
+  const closeBtn = toast.querySelector('.toast-close');
+  closeBtn.addEventListener('click', () => {
+    removeToast(toast);
+  });
+
+  // Add to container
+  container.appendChild(toast);
+
+  // Announce to screen reader
+  announceToScreenReader(`${titles[type]}: ${message}`);
+
+  // Auto-remove after duration
+  if (duration > 0) {
+    setTimeout(() => {
+      removeToast(toast);
+    }, duration);
+  }
+
+  return toastId;
+}
+
+function removeToast(toast) {
+  if (!toast) return;
+  
+  toast.classList.add('removing');
+  toast.addEventListener('animationend', () => {
+    toast.remove();
+  });
+}
+
+function removeAllToasts() {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+  
+  const toasts = container.querySelectorAll('.toast');
+  toasts.forEach(toast => removeToast(toast));
+}
+
+/****************************
+ * ♿ ACCESSIBILITY HELPERS
+ ****************************/
+
+// Announce messages to screen readers
+function announceToScreenReader(message) {
+  const liveRegion = document.getElementById('ariaLiveRegion');
+  if (liveRegion) {
+    liveRegion.textContent = message;
+    // Clear after announcement
+    setTimeout(() => {
+      liveRegion.textContent = '';
+    }, 1000);
+  }
+}
+
+// Enhanced showAuthMessage with screen reader support
+function showAuthMessageAccessible(message, type = 'info') {
+  showAuthMessage(message, type);
+  announceToScreenReader(message);
+}
+
+/****************************
+ * 🌙 DARK MODE TOGGLE
+ ****************************/
+
+const darkModeToggle = document.getElementById('darkModeToggle');
+const sunIcon = darkModeToggle.querySelector('.sun-icon');
+const moonIcon = darkModeToggle.querySelector('.moon-icon');
+
+// Check for saved theme preference or default to light mode
+const currentTheme = localStorage.getItem('theme') || 'light';
+
+// Apply saved theme on load
+if (currentTheme === 'dark') {
+  document.documentElement.classList.add('dark-mode');
+  sunIcon.classList.add('d-none');
+  moonIcon.classList.remove('d-none');
+}
+
+// Toggle dark mode
+darkModeToggle.addEventListener('click', () => {
+  document.documentElement.classList.toggle('dark-mode');
+  
+  const isDark = document.documentElement.classList.contains('dark-mode');
+  
+  // Toggle icons
+  sunIcon.classList.toggle('d-none', isDark);
+  moonIcon.classList.toggle('d-none', !isDark);
+  
+  // Save preference
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  
+  // Announce to screen readers
+  announceToScreenReader(isDark ? 'เปิดโหมดมืด' : 'เปิดโหมดสว่าง');
+});
+
+/****************************
+ * � RATE LIMITING (Client-side)
+ ****************************/
+
+const rateLimiter = {
+  attempts: {},
+  maxAttempts: 5,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  
+  isRateLimited(key) {
+    const now = Date.now();
+    const userAttempts = this.attempts[key] || [];
+    
+    // Remove old attempts outside the window
+    const recentAttempts = userAttempts.filter(time => now - time < this.windowMs);
+    this.attempts[key] = recentAttempts;
+    
+    if (recentAttempts.length >= this.maxAttempts) {
+      const oldestAttempt = Math.min(...recentAttempts);
+      const timeLeft = Math.ceil((this.windowMs - (now - oldestAttempt)) / 1000 / 60);
+      return { limited: true, timeLeft };
+    }
+    
+    return { limited: false };
+  },
+  
+  recordAttempt(key) {
+    if (!this.attempts[key]) {
+      this.attempts[key] = [];
+    }
+    this.attempts[key].push(Date.now());
+  },
+  
+  reset(key) {
+    delete this.attempts[key];
+  }
+};
+
+/****************************
+ * �🔑 PASSWORD TOGGLE FUNCTIONALITY
  ****************************/
 const togglePasswordBtn = document.getElementById('togglePassword');
 const passwordInput = document.getElementById('loginPassword');
@@ -24,9 +231,53 @@ togglePasswordBtn.addEventListener('click', () => {
  * 🔒 PASSWORD STRENGTH CHECKER
  ****************************/
 const passwordStrengthDiv = document.getElementById('passwordStrength');
+const passwordRequirements = document.getElementById('passwordRequirements');
+const passwordRequirementsBtn = document.getElementById('passwordRequirementsBtn');
+
+// Toggle password requirements tooltip
+passwordRequirementsBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  passwordRequirements.classList.toggle('d-none');
+});
+
+// Show requirements on focus, hide on blur
+passwordInput.addEventListener('focus', () => {
+  passwordRequirements.classList.remove('d-none');
+});
+
+passwordInput.addEventListener('blur', () => {
+  setTimeout(() => {
+    passwordRequirements.classList.add('d-none');
+  }, 200);
+});
+
+// Check individual password requirements
+function checkPasswordRequirements(password) {
+  const requirements = {
+    length: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /\d/.test(password),
+    special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+  };
+  
+  // Update UI for each requirement
+  document.getElementById('req-length').classList.toggle('met', requirements.length);
+  document.getElementById('req-uppercase').classList.toggle('met', requirements.uppercase);
+  document.getElementById('req-lowercase').classList.toggle('met', requirements.lowercase);
+  document.getElementById('req-number').classList.toggle('met', requirements.number);
+  document.getElementById('req-special').classList.toggle('met', requirements.special);
+  
+  return requirements;
+}
 
 passwordInput.addEventListener('input', () => {
   const password = passwordInput.value;
+  
+  // Update requirements checklist
+  if (password.length > 0) {
+    checkPasswordRequirements(password);
+  }
   
   if (password.length === 0) {
     passwordStrengthDiv.classList.add('d-none');
@@ -113,6 +364,83 @@ rememberMeCheckbox.addEventListener('change', () => {
 });
 
 /****************************
+ * 📧 EMAIL VALIDATION REALTIME
+ ****************************/
+
+// Email validation regex
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+// Get email input elements early
+const loginEmailError = document.getElementById('loginEmailError');
+const resetEmailInput = document.getElementById('resetEmail');
+const resetEmailError = document.getElementById('resetEmailError');
+
+// Validate email and show feedback
+function validateEmailInput(inputElement, errorElement) {
+  const email = inputElement.value.trim();
+  const wrapper = inputElement.closest('.email-input-wrapper');
+  const validationIcon = wrapper.querySelector('.email-validation-icon');
+  const checkIcon = validationIcon.querySelector('.check-icon');
+  const xIcon = validationIcon.querySelector('.x-icon');
+  
+  // Clear previous state
+  inputElement.classList.remove('email-valid', 'email-invalid');
+  checkIcon.classList.add('d-none');
+  xIcon.classList.add('d-none');
+  errorElement.classList.add('d-none');
+  
+  if (email.length === 0) {
+    // Empty - no validation
+    return true;
+  }
+  
+  if (isValidEmail(email)) {
+    // Valid email
+    inputElement.classList.add('email-valid');
+    checkIcon.classList.remove('d-none');
+    return true;
+  } else {
+    // Invalid email
+    inputElement.classList.add('email-invalid');
+    xIcon.classList.remove('d-none');
+    
+    // Show error message
+    if (email.length > 0) {
+      if (!email.includes('@')) {
+        errorElement.textContent = '⚠️ อีเมลต้องมี @';
+      } else if (!email.includes('.')) {
+        errorElement.textContent = '⚠️ รูปแบบอีเมลไม่ถูกต้อง';
+      } else {
+        errorElement.textContent = '⚠️ รูปแบบอีเมลไม่ถูกต้อง';
+      }
+      errorElement.classList.remove('d-none');
+    }
+    return false;
+  }
+}
+
+// Login email validation
+loginEmailInput.addEventListener('input', () => {
+  validateEmailInput(loginEmailInput, loginEmailError);
+});
+
+loginEmailInput.addEventListener('blur', () => {
+  validateEmailInput(loginEmailInput, loginEmailError);
+});
+
+// Reset email validation
+resetEmailInput.addEventListener('input', () => {
+  validateEmailInput(resetEmailInput, resetEmailError);
+});
+
+resetEmailInput.addEventListener('blur', () => {
+  validateEmailInput(resetEmailInput, resetEmailError);
+});
+
+/****************************
  * PWA / UI เดิม
  ****************************/
 
@@ -155,11 +483,62 @@ const SUPABASE_URL = 'https://vlqhwnsdheoljyexkpls.supabase.co';
 const SUPABASE_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZscWh3bnNkaGVvbGp5ZXhrcGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3MzE2MjAsImV4cCI6MjA4MzMwNzYyMH0.AWHo-1nnu9hdVUivKLC2O98wQhDFA7nhTE1qt9ZeZfs';
 
+// Check if Supabase is loaded
+if (!window.supabase) {
+  console.error('❌ Supabase SDK not loaded! Check if the CDN script is working.');
+  alert('เกิดข้อผิดพลาด: ไม่สามารถโหลด Supabase SDK กรุณา refresh หน้าเว็บ');
+}
+
 // ✅ สำคัญ: ใช้ window.supabase และตั้งชื่อใหม่เป็น db
-const db = window.supabase.createClient(
+// ใช้ localStorage โดยตรง ไม่ใช้ custom adapter
+const db = window.supabase?.createClient(
   SUPABASE_URL,
-  SUPABASE_ANON_KEY
+  SUPABASE_ANON_KEY,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storage: window.localStorage
+    }
+  }
 );
+
+if (!db) {
+  console.error('❌ Failed to create Supabase client');
+} else {
+  console.log('✅ Supabase client created with persistent storage');
+}
+
+console.log('🔍 Supabase check:', {
+  sdkLoaded: !!window.supabase,
+  clientCreated: !!db,
+  localStorage: !!window.localStorage
+});
+
+// Test localStorage
+try {
+  localStorage.setItem('test', 'works');
+  const testValue = localStorage.getItem('test');
+  console.log('✅ localStorage test:', testValue);
+  localStorage.removeItem('test');
+} catch (e) {
+  console.error('❌ localStorage blocked:', e);
+}
+
+// Check current session immediately
+setTimeout(async () => {
+  const { data: { session } } = await db.auth.getSession();
+  console.log('🔍 Current session:', session);
+  console.log('📦 All localStorage keys:', Object.keys(localStorage));
+  
+  if (session) {
+    console.log('🎯 Session found! Should show app now...');
+    console.log('🔍 Checking if checkAuthStatus will be called...');
+  } else {
+    console.log('❌ No session found in initial check');
+  }
+}, 1000);
 
 
 /****************************
@@ -168,30 +547,97 @@ const db = window.supabase.createClient(
 
 // ตรวจสอบสถานะการล็อกอินเมื่อโหลดหน้า
 async function checkAuthStatus() {
-  const { data: { session } } = await db.auth.getSession();
+  console.log('🔍 Checking auth status...');
+  console.log('📦 localStorage keys at check:', Object.keys(localStorage));
   
-  if (session) {
-    showApp(session.user);
-  } else {
+  try {
+    const { data: { session }, error } = await db.auth.getSession();
+    
+    console.log('🔍 getSession result:', { session: !!session, error });
+    
+    if (error) {
+      console.error('❌ Error getting session:', error);
+      showLogin();
+      return;
+    }
+    
+    if (session) {
+      console.log('✅ User is logged in:', session.user.email);
+      showApp(session.user);
+    } else {
+      console.log('ℹ️ No active session, showing login');
+      console.log('📦 But localStorage has:', Object.keys(localStorage));
+      showLogin();
+    }
+  } catch (err) {
+    console.error('❌ Exception in checkAuthStatus:', err);
     showLogin();
   }
 }
 
 // แสดงหน้าล็อกอิน
 function showLogin() {
+  console.log('📱 Showing login page');
   document.getElementById('loginContainer').classList.remove('d-none');
   document.getElementById('appContainer').classList.add('d-none');
 }
 
 // แสดงหน้าแอปหลัก
-function showApp(user) {
+async function showApp(user) {
+  console.log('🚀 Showing app for user:', user?.email);
   document.getElementById('loginContainer').classList.add('d-none');
   document.getElementById('appContainer').classList.remove('d-none');
   
   // แสดงข้อมูลผู้ใช้
   if (user && user.email) {
-    document.getElementById('userEmail').textContent = user.email;
+    const emailElements = document.querySelectorAll('#userEmail, #dropdownEmail');
+    emailElements.forEach(el => {
+      if (el) el.textContent = user.email;
+    });
+    
+    // Update avatar with first letter or saved avatar
+    const savedAvatar = localStorage.getItem('userAvatar');
+    const firstLetter = user.email.charAt(0).toUpperCase();
+    const avatarToUse = savedAvatar || firstLetter;
+    
+    const avatarElements = document.querySelectorAll('.user-avatar, .dropdown-avatar');
+    avatarElements.forEach(avatar => {
+      if (avatar) avatar.textContent = avatarToUse;
+    });
+    
+    // Update dropdown meta info
+    const createdDate = new Date(user.created_at);
+    const formattedDate = createdDate.toLocaleDateString('th-TH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+    const dropdownMeta = document.getElementById('dropdownMeta');
+    if (dropdownMeta) {
+      dropdownMeta.textContent = `สมาชิกตั้งแต่: ${formattedDate}`;
+    }
   }
+  
+  // Setup user dropdown menu after app is shown
+  setupUserDropdown();
+  
+  // Setup profile modal
+  setupProfileModal();
+  
+  // Setup change password modal
+  setupChangePasswordModal();
+  
+  // Setup avatar picker
+  setupAvatarPicker();
+  
+  // Setup data management buttons
+  setupDataManagement();
+  
+  // Load user profile data
+  await loadUserProfile();
+  
+  // Auto-load data
+  loadData();
 }
 
 // แสดงข้อความ
@@ -223,53 +669,120 @@ function setButtonLoading(button, isLoading) {
   }
 }
 
+// Add shake animation on error
+function shakeElement(element) {
+  element.classList.add('shake');
+  setTimeout(() => {
+    element.classList.remove('shake');
+  }, 500);
+}
+
+// Add success pulse animation
+function pulseSuccess(element) {
+  element.classList.add('pulse-success');
+  setTimeout(() => {
+    element.classList.remove('pulse-success');
+  }, 1000);
+}
+
 // Login Form
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   
-  const email = document.getElementById('loginEmail').value;
+  const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
   const submitBtn = document.getElementById('loginSubmitBtn');
+  
+  // Check rate limiting
+  const rateLimitCheck = rateLimiter.isRateLimited('login');
+  if (rateLimitCheck.limited) {
+    showToast(`พยายามเข้าสู่ระบบมากเกินไป กรุณารอ ${rateLimitCheck.timeLeft} นาที`, 'warning');
+    shakeElement(document.getElementById('loginForm'));
+    return;
+  }
+  
+  // Validate email before submission
+  if (!isValidEmail(email)) {
+    validateEmailInput(loginEmailInput, loginEmailError);
+    showToast('กรุณากรอกอีเมลให้ถูกต้อง', 'warning');
+    shakeElement(loginEmailInput);
+    return;
+  }
   
   // Show loading state
   setButtonLoading(submitBtn, true);
   
-  const { data, error } = await db.auth.signInWithPassword({
-    email,
-    password
-  });
+  console.log('🔐 Attempting login for:', email);
   
-  // Hide loading state
-  setButtonLoading(submitBtn, false);
-  
-  if (error) {
-    showAuthMessage('❌ ' + error.message, 'danger');
-  } else {
-    // Save email if remember me is checked
-    if (rememberMeCheckbox.checked) {
-      localStorage.setItem('rememberedEmail', email);
-    }
+  try {
+    const { data, error } = await db.auth.signInWithPassword({
+      email,
+      password
+    });
     
-    showAuthMessage('✅ เข้าสู่ระบบสำเร็จ!', 'success');
-    setTimeout(() => {
-      showApp(data.user);
-    }, 1000);
+    // Hide loading state
+    setButtonLoading(submitBtn, false);
+    
+    if (error) {
+      console.error('❌ Login error:', error);
+      rateLimiter.recordAttempt('login');
+      showToast(error.message, 'error');
+      shakeElement(document.getElementById('loginForm'));
+    } else {
+      console.log('✅ Login successful!', data);
+      rateLimiter.reset('login');
+      
+      // Check if session was saved
+      setTimeout(() => {
+        const savedToken = localStorage.getItem('sb-vlqhwnsdheoljyexkpls-auth-token');
+        console.log('🔍 Token saved after login?', savedToken ? 'YES ✅' : 'NO ❌');
+        if (savedToken) {
+          console.log('📝 Token preview:', savedToken.substring(0, 50) + '...');
+        }
+      }, 500);
+      
+      // Save email if remember me is checked
+      if (rememberMeCheckbox.checked) {
+        localStorage.setItem('rememberedEmail', email);
+      }
+      
+      showToast('เข้าสู่ระบบสำเร็จ!', 'success', 2000);
+      pulseSuccess(submitBtn);
+      
+      // Wait for animation then show app
+      setTimeout(() => {
+        console.log('🚀 Switching to app view...');
+        showApp(data.user);
+      }, 1000);
+    }
+  } catch (err) {
+    console.error('❌ Exception during login:', err);
+    setButtonLoading(submitBtn, false);
+    showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+    shakeElement(document.getElementById('loginForm'));
   }
 });
 
 // Signup Button
 document.getElementById('signupBtn').addEventListener('click', async () => {
-  const email = document.getElementById('loginEmail').value;
+  const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
   const signupBtn = document.getElementById('signupBtn');
   
   if (!email || !password) {
-    showAuthMessage('⚠️ กรุณากรอกอีเมลและรหัสผ่าน', 'warning');
+    showToast('กรุณากรอกอีเมลและรหัสผ่าน', 'warning');
+    return;
+  }
+  
+  // Validate email before signup
+  if (!isValidEmail(email)) {
+    validateEmailInput(loginEmailInput, loginEmailError);
+    showToast('กรุณากรอกอีเมลให้ถูกต้อง', 'warning');
     return;
   }
   
   if (password.length < 6) {
-    showAuthMessage('⚠️ รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร', 'warning');
+    showToast('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร', 'warning');
     return;
   }
   
@@ -285,11 +798,81 @@ document.getElementById('signupBtn').addEventListener('click', async () => {
   setButtonLoading(signupBtn, false);
   
   if (error) {
-    showAuthMessage('❌ ' + error.message, 'danger');
+    showToast(error.message, 'error');
   } else {
-    showAuthMessage('✅ สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ', 'success');
+    // Show success message with email verification instruction
+    showToast('ส่งอีเมลยืนยันแล้ว! กรุณาตรวจสอบอีเมลของคุณ', 'success', 8000);
+    
+    // Show additional modal with instructions
+    showEmailVerificationModal(email);
   }
 });
+
+// Email Verification Modal
+function showEmailVerificationModal(email) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.id = 'emailVerificationModal';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  
+  modal.innerHTML = `
+    <div class="modal-content verification-modal" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3>📧 ยืนยันอีเมลของคุณ</h3>
+        <button type="button" class="modal-close-btn" onclick="document.getElementById('emailVerificationModal').remove()" aria-label="ปิดหน้าต่าง">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align: center; padding: 1rem 0;">
+          <div style="font-size: 4rem; margin-bottom: 1rem;">📬</div>
+          <h4 style="margin-bottom: 1rem;">เราได้ส่งอีเมลยืนยันไปที่:</h4>
+          <p style="font-weight: 600; color: hsl(var(--primary)); font-size: 1rem; margin-bottom: 1.5rem;">${email}</p>
+          
+          <div style="text-align: left; background: hsl(var(--accent)); padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem;">
+            <p style="margin-bottom: 0.5rem;"><strong>📌 ขั้นตอนต่อไป:</strong></p>
+            <ol style="margin: 0; padding-left: 1.5rem; line-height: 1.8;">
+              <li>เปิดอีเมลของคุณ</li>
+              <li>ค้นหาอีเมลจาก <strong>Supabase</strong></li>
+              <li>คลิกลิงก์ยืนยันในอีเมล</li>
+              <li>กลับมาเข้าสู่ระบบ</li>
+            </ol>
+          </div>
+          
+          <p style="font-size: 0.875rem; color: hsl(var(--muted-foreground)); margin-bottom: 1rem;">
+            <strong>เคล็ดลับ:</strong> ถ้าไม่เห็นอีเมล ลองตรวจสอบใน Spam/Junk folder
+          </p>
+          
+          <button class="btn btn-primary w-100" onclick="document.getElementById('emailVerificationModal').remove()">
+            เข้าใจแล้ว
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Close on backdrop click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.remove();
+    }
+  });
+  
+  // Close on ESC key
+  const escHandler = (e) => {
+    if (e.key === 'Escape') {
+      modal.remove();
+      document.removeEventListener('keydown', escHandler);
+    }
+  };
+  document.addEventListener('keydown', escHandler);
+}
 
 /****************************
  * 🔑 OAUTH LOGIN (GitHub & Google)
@@ -314,7 +897,7 @@ document.getElementById('githubLoginBtn').addEventListener('click', async () => 
     
   } catch (error) {
     console.error('GitHub login error:', error);
-    showAuthMessage('❌ ไม่สามารถเข้าสู่ระบบด้วย GitHub ได้: ' + error.message, 'danger');
+    showToast('ไม่สามารถเข้าสู่ระบบด้วย GitHub ได้: ' + error.message, 'error');
     
     // Reset button
     githubBtn.disabled = false;
@@ -346,7 +929,7 @@ document.getElementById('googleLoginBtn').addEventListener('click', async () => 
     
   } catch (error) {
     console.error('Google login error:', error);
-    showAuthMessage('❌ ไม่สามารถเข้าสู่ระบบด้วย Google ได้: ' + error.message, 'danger');
+    showToast('ไม่สามารถเข้าสู่ระบบด้วย Google ได้: ' + error.message, 'error');
     
     // Reset button
     googleBtn.disabled = false;
@@ -360,6 +943,202 @@ document.getElementById('googleLoginBtn').addEventListener('click', async () => 
       Google
     `;
   }
+});
+
+/****************************
+ * 🔑 FORGOT PASSWORD FUNCTIONALITY
+ ****************************/
+
+const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+const closeForgotModal = document.getElementById('closeForgotModal');
+const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+// resetEmailInput and resetEmailError already declared in EMAIL VALIDATION section
+const resetPasswordBtn = document.getElementById('resetPasswordBtn');
+
+// Open modal
+forgotPasswordLink.addEventListener('click', (e) => {
+  e.preventDefault();
+  forgotPasswordModal.classList.remove('d-none');
+  const loginEmail = document.getElementById('loginEmail').value.trim();
+  resetEmailInput.value = loginEmail; // Pre-fill with login email
+  
+  // Validate pre-filled email
+  if (loginEmail) {
+    setTimeout(() => {
+      validateEmailInput(resetEmailInput, resetEmailError);
+    }, 100);
+  }
+  
+  resetEmailInput.focus();
+});
+
+// Close modal
+closeForgotModal.addEventListener('click', () => {
+  forgotPasswordModal.classList.add('d-none');
+});
+
+// Close modal on overlay click
+forgotPasswordModal.addEventListener('click', (e) => {
+  if (e.target === forgotPasswordModal) {
+    forgotPasswordModal.classList.add('d-none');
+  }
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !forgotPasswordModal.classList.contains('d-none')) {
+    forgotPasswordModal.classList.add('d-none');
+  }
+});
+
+// Handle forgot password form submission
+forgotPasswordForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const email = resetEmailInput.value.trim();
+  const resetMessage = document.getElementById('resetMessage');
+  
+  // Validate email before submission
+  if (!isValidEmail(email)) {
+    validateEmailInput(resetEmailInput, resetEmailError);
+    resetMessage.textContent = '⚠️ กรุณากรอกอีเมลให้ถูกต้อง';
+    resetMessage.className = 'alert alert-warning mt-3';
+    resetMessage.classList.remove('d-none');
+    return;
+  }
+  
+  // Show loading state
+  setButtonLoading(resetPasswordBtn, true);
+  
+  try {
+    const { data, error } = await db.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password.html`
+    });
+    
+    if (error) throw error;
+    
+    // Show success message
+    resetMessage.textContent = '✅ ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณแล้ว กรุณาตรวจสอบกล่องจดหมาย';
+    resetMessage.className = 'alert alert-success mt-3';
+    resetMessage.classList.remove('d-none');
+    
+    // Clear form
+    resetEmailInput.value = '';
+    
+    // Close modal after 3 seconds
+    setTimeout(() => {
+      forgotPasswordModal.classList.add('d-none');
+      resetMessage.classList.add('d-none');
+    }, 3000);
+    
+  } catch (error) {
+    console.error('Password reset error:', error);
+    resetMessage.textContent = '❌ เกิดข้อผิดพลาด: ' + error.message;
+    resetMessage.className = 'alert alert-danger mt-3';
+    resetMessage.classList.remove('d-none');
+  } finally {
+    // Hide loading state
+    setButtonLoading(resetPasswordBtn, false);
+  }
+});
+
+/****************************
+ * ⌨️ KEYBOARD SHORTCUTS
+ ****************************/
+
+// Global keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  // ESC key - Close modals
+  if (e.key === 'Escape') {
+    if (!forgotPasswordModal.classList.contains('d-none')) {
+      forgotPasswordModal.classList.add('d-none');
+    }
+    const userProfileModal = document.getElementById('userProfileModal');
+    if (userProfileModal && !userProfileModal.classList.contains('d-none')) {
+      userProfileModal.classList.add('d-none');
+    }
+    const changePasswordModal = document.getElementById('changePasswordModal');
+    if (changePasswordModal && !changePasswordModal.classList.contains('d-none')) {
+      changePasswordModal.classList.add('d-none');
+    }
+    const userDropdown = document.getElementById('userDropdown');
+    if (userDropdown && !userDropdown.classList.contains('d-none')) {
+      if (window.closeUserDropdown) {
+        window.closeUserDropdown();
+      }
+    }
+  }
+  
+  // Ctrl/Cmd + K - Focus on search (if logged in)
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput && !document.getElementById('appContainer').classList.contains('d-none')) {
+      searchInput.focus();
+      searchInput.select();
+    }
+  }
+  
+  // Alt + L - Focus on login email (if on login page)
+  if (e.altKey && e.key === 'l') {
+    e.preventDefault();
+    if (!document.getElementById('loginContainer').classList.contains('d-none')) {
+      loginEmailInput.focus();
+    }
+  }
+  
+  // Alt + P - Focus on password (if on login page)
+  if (e.altKey && e.key === 'p') {
+    e.preventDefault();
+    if (!document.getElementById('loginContainer').classList.contains('d-none')) {
+      passwordInput.focus();
+    }
+  }
+  
+  // Alt + F - Open forgot password modal
+  if (e.altKey && e.key === 'f') {
+    e.preventDefault();
+    if (!document.getElementById('loginContainer').classList.contains('d-none')) {
+      forgotPasswordLink.click();
+    }
+  }
+});
+
+// Enter key on email field - Move to password field
+loginEmailInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    passwordInput.focus();
+  }
+});
+
+// Enter key on password field - Submit form
+passwordInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    // Let the form's submit event handle it
+    document.getElementById('loginForm').requestSubmit();
+  }
+});
+
+// Enter key in forgot password modal - Submit form
+resetEmailInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    forgotPasswordForm.requestSubmit();
+  }
+});
+
+// Tab key handling for better focus management
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Tab') {
+    // Add visible focus indicator
+    document.body.classList.add('keyboard-navigation');
+  }
+});
+
+// Mouse click - Remove keyboard navigation class
+document.addEventListener('mousedown', () => {
+  document.body.classList.remove('keyboard-navigation');
 });
 
 // Logout Button
@@ -378,28 +1157,40 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 });
 
 // ฟังการเปลี่ยนแปลง auth state
+// Listen for auth state changes
+let authInitialized = false;
+
 db.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_IN') {
+  console.log('🔄 Auth state changed:', event, session?.user?.email);
+  
+  if (event === 'INITIAL_SESSION') {
+    authInitialized = true;
+    if (session) {
+      console.log('✅ Session restored from storage');
+      showApp(session.user);
+    } else {
+      console.log('ℹ️ No stored session, showing login');
+      showLogin();
+    }
+  } else if (event === 'SIGNED_IN' && session) {
+    console.log('✅ User signed in');
     showApp(session.user);
   } else if (event === 'SIGNED_OUT') {
+    console.log('👋 User signed out');
     showLogin();
+  } else if (event === 'TOKEN_REFRESHED' && session) {
+    console.log('🔄 Token refreshed');
   }
 });
 
-// เรียกใช้เมื่อโหลดหน้า
-checkAuthStatus();
+// Fallback if INITIAL_SESSION doesn't fire
+setTimeout(() => {
+  if (!authInitialized) {
+    console.warn('⚠️ INITIAL_SESSION not fired, checking manually...');
+    checkAuthStatus();
+  }
+}, 2000);
 
-
-/****************************
- * Supabase READ
- ****************************/
-
-// Global variables for data management
-let originalData = [];
-let currentSort = { column: 'created_at', direction: 'desc' };
-let currentFilter = '';
-let currentPage = 1;
-let itemsPerPage = 10;
 
 /****************************
  * Supabase READ
@@ -411,10 +1202,13 @@ async function loadData() {
   const tableContainer = document.getElementById('tableContainer');
   const dataTableBody = document.getElementById('dataTableBody');
 
-  // Show loading, hide others
+  // Show loading skeleton instead of spinner
   loadingSpinner.classList.remove('d-none');
   errorMessage.classList.add('d-none');
   tableContainer.classList.add('d-none');
+  
+  // Show skeleton table
+  showTableSkeleton();
 
   const { data, error } = await db
     .from('ID') // 👈 ชื่อตารางใน Supabase
@@ -425,6 +1219,7 @@ async function loadData() {
 
   if (error) {
     console.error(error);
+    showToast('Error loading data: ' + error.message, 'error');
     errorMessage.textContent = '❌ Error: ' + error.message;
     errorMessage.classList.remove('d-none');
     return;
@@ -438,6 +1233,7 @@ async function loadData() {
   displayData();
 
   tableContainer.classList.remove('d-none');
+  showToast('Data loaded successfully!', 'success', 2000);
 }
 
 /****************************
@@ -702,7 +1498,7 @@ function cancelEdit(row, originalName) {
 
 async function saveEdit(row, itemId, newName) {
   if (!newName) {
-    alert('Name cannot be empty!');
+    showToast('Name cannot be empty!', 'warning');
     return;
   }
 
@@ -714,7 +1510,7 @@ async function saveEdit(row, itemId, newName) {
 
     if (error) {
       console.error('Error updating record:', error);
-      alert('Error updating record: ' + error.message);
+      showToast('Error updating: ' + error.message, 'error');
       return;
     }
 
@@ -727,10 +1523,10 @@ async function saveEdit(row, itemId, newName) {
     // Refresh display
     displayData();
 
-    alert('Record updated successfully!');
+    showToast('Record updated successfully!', 'success');
   } catch (error) {
     console.error('Error:', error);
-    alert('An error occurred while updating the record.');
+    showToast('An error occurred while updating', 'error');
   }
 }
 
@@ -751,7 +1547,7 @@ async function performDelete(itemId, itemName) {
 
     if (error) {
       console.error('Error deleting record:', error);
-      alert('Error deleting record: ' + error.message);
+      showToast('Error deleting: ' + error.message, 'error');
       return;
     }
 
@@ -761,57 +1557,97 @@ async function performDelete(itemId, itemName) {
     // Refresh display
     displayData();
 
-    alert(`Record "${itemName}" deleted successfully!`);
+    showToast(`Record "${itemName}" deleted successfully!`, 'success');
   } catch (error) {
     console.error('Error:', error);
-    alert('An error occurred while deleting the record.');
+    showToast('An error occurred while deleting', 'error');
   }
 }
 
-// ปุ่ม Load Data
-const loadBtn = document.getElementById('loadDataBtn');
-if (loadBtn) {
-  loadBtn.addEventListener('click', loadData);
-}
+/****************************
+ * 📊 DATA MANAGEMENT SETUP
+ ****************************/
 
-// ปุ่ม Add Item
-const addItemBtn = document.getElementById('addItemBtn');
-if (addItemBtn) {
-  addItemBtn.addEventListener('click', async () => {
-    const name = prompt('Enter item name:');
-    if (!name || !name.trim()) return;
+function setupDataManagement() {
+  console.log('📊 Setting up data management...');
+  
+  // Load Data Button
+  const loadBtn = document.getElementById('loadDataBtn');
+  if (loadBtn) {
+    console.log('✅ Load Data button found');
+    loadBtn.addEventListener('click', () => {
+      console.log('🔄 Load Data button clicked');
+      loadData();
+    });
+  } else {
+    console.error('❌ Load Data button not found');
+  }
+  
+  // Add Item Button
+  const addItemBtn = document.getElementById('addItemBtn');
+  if (addItemBtn) {
+    console.log('✅ Add Item button found');
+    addItemBtn.addEventListener('click', async () => {
+      console.log('➕ Add Item button clicked');
+      const name = prompt('Enter item name:');
+      if (!name || !name.trim()) return;
 
-    const { error } = await db
-      .from('ID')
-      .insert([{ NAME: name.trim() }]);
+      const { error } = await db
+        .from('ID')
+        .insert([{ NAME: name.trim() }]);
 
-    if (error) {
-      console.error(error);
-      alert('Error adding item: ' + error.message);
-      return;
-    }
-
-    alert('Item added successfully!');
-    loadData(); // Reload data
-  });
-}
-
-// ปุ่ม Download CSV
-const downloadCsvBtn = document.getElementById('downloadCsvBtn');
-if (downloadCsvBtn) {
-  downloadCsvBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    downloadCSV();
-  });
-}
-
-// ปุ่ม Download PDF
-const downloadPdfBtn = document.getElementById('downloadPdfBtn');
-if (downloadPdfBtn) {
-  downloadPdfBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    downloadPDF();
-  });
+      if (error) {
+        console.error('Error adding item:', error);
+        showToast('Error adding item: ' + error.message, 'error');
+      } else {
+        showToast('Item added successfully!', 'success', 2000);
+        loadData(); // Reload data
+      }
+    });
+  } else {
+    console.error('❌ Add Item button not found');
+  }
+  
+  // Download CSV Button
+  const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+  if (downloadCsvBtn) {
+    downloadCsvBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      downloadCSV();
+    });
+  }
+  
+  // Search functionality
+  const searchInput = document.getElementById('searchInput');
+  const searchBtn = document.getElementById('searchBtn');
+  const clearSearchBtn = document.getElementById('clearSearchBtn');
+  
+  if (searchInput && searchBtn) {
+    searchBtn.addEventListener('click', () => {
+      currentFilter = searchInput.value;
+      resetPagination();
+      displayData();
+    });
+    
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        currentFilter = searchInput.value;
+        resetPagination();
+        displayData();
+      }
+    });
+  }
+  
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', () => {
+      if (searchInput) searchInput.value = '';
+      currentFilter = '';
+      resetPagination();
+      displayData();
+    });
+  }
+  
+  console.log('✅ Data management setup complete');
 }
 
 /****************************
@@ -1035,9 +1871,8 @@ document.getElementById('helloBtn').addEventListener('click', async () => {
   const name = input.value.trim();
 
   if (!name) {
-    greeting.textContent = '❗ กรุณาใส่ชื่อ';
-    greeting.className = 'alert alert-warning';
-    greeting.classList.remove('d-none');
+    showToast('กรุณาใส่ชื่อ', 'warning');
+    greeting.textContent = '';
     return;
   }
 
@@ -1051,11 +1886,13 @@ document.getElementById('helloBtn').addEventListener('click', async () => {
 
   if (error) {
     console.error(error);
-    greeting.textContent = '❌ Error: ' + error.message;
-    greeting.className = 'alert alert-danger';
+    showToast('Error: ' + error.message, 'error');
+    greeting.textContent = '';
+    greeting.classList.add('d-none');
     return;
   }
 
+  showToast(`Hello ${name}!`, 'success', 3000);
   greeting.textContent = `✅ Hello ${name}`;
   greeting.className = 'alert alert-success';
   input.value = '';
@@ -1204,6 +2041,651 @@ function renderPagination(filteredData) {
 
 function resetPagination() {
   currentPage = 1;
+}
+
+/****************************
+ * 👤 USER DROPDOWN MENU
+ ****************************/
+
+// Toggle dropdown menu
+function setupUserDropdown() {
+  const userMenuBtn = document.getElementById('userMenuBtn');
+  const userDropdown = document.getElementById('userDropdown');
+  const openProfileMenu = document.getElementById('openProfileMenu');
+  const settingsMenu = document.getElementById('settingsMenu');
+  const changePasswordMenu = document.getElementById('changePasswordMenu');
+  const logoutMenuBtn = document.getElementById('logoutMenuBtn');
+
+  console.log('🔍 User Dropdown Setup:', {
+    userMenuBtn: !!userMenuBtn,
+    userDropdown: !!userDropdown,
+    openProfileMenu: !!openProfileMenu,
+    settingsMenu: !!settingsMenu,
+    changePasswordMenu: !!changePasswordMenu,
+    logoutMenuBtn: !!logoutMenuBtn
+  });
+
+  if (!userMenuBtn || !userDropdown) {
+    console.error('❌ User menu button or dropdown not found');
+    return;
+  }
+
+  userMenuBtn.addEventListener('click', (e) => {
+    console.log('🖱️ User menu button clicked');
+    e.stopPropagation();
+    const isExpanded = userMenuBtn.getAttribute('aria-expanded') === 'true';
+    console.log('Current state:', { isExpanded });
+    
+    if (isExpanded) {
+      console.log('Closing dropdown');
+      closeUserDropdown();
+    } else {
+      console.log('Opening dropdown');
+      openUserDropdown();
+    }
+  });
+
+  function openUserDropdown() {
+    console.log('📂 Opening user dropdown');
+    userDropdown.classList.remove('d-none');
+    userMenuBtn.setAttribute('aria-expanded', 'true');
+    
+    // Update dropdown user info
+    updateDropdownUserInfo();
+  }
+
+  function closeUserDropdown() {
+    userDropdown.classList.add('d-none');
+    userMenuBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (userDropdown && !userDropdown.classList.contains('d-none')) {
+      if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
+        closeUserDropdown();
+      }
+    }
+  });
+
+  // Dropdown menu actions
+  if (openProfileMenu) {
+    openProfileMenu.addEventListener('click', async (e) => {
+      e.preventDefault();
+      closeUserDropdown();
+      const userProfileModal = document.getElementById('userProfileModal');
+      if (userProfileModal) {
+        userProfileModal.classList.remove('d-none');
+        await loadUserProfile();
+      }
+    });
+  }
+
+  if (settingsMenu) {
+    settingsMenu.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeUserDropdown();
+      showToast('ฟีเจอร์ตั้งค่ากำลังพัฒนา', 'info', 3000);
+    });
+  }
+
+  if (changePasswordMenu) {
+    changePasswordMenu.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeUserDropdown();
+      const changePasswordModal = document.getElementById('changePasswordModal');
+      if (changePasswordModal) {
+        changePasswordModal.classList.remove('d-none');
+        
+        // Clear form
+        const changePasswordForm = document.getElementById('changePasswordForm');
+        if (changePasswordForm) changePasswordForm.reset();
+        
+        const passwordMatchError = document.getElementById('passwordMatchError');
+        if (passwordMatchError) passwordMatchError.classList.remove('show');
+        
+        // Reset strength indicator
+        const strengthFill = document.querySelector('#newPasswordStrength .strength-fill');
+        const strengthLabel = document.querySelector('#newPasswordStrength .strength-label');
+        if (strengthFill) strengthFill.className = 'strength-fill';
+        if (strengthLabel) {
+          strengthLabel.className = 'strength-label';
+          strengthLabel.textContent = '-';
+        }
+        
+        // Focus on first input
+        setTimeout(() => {
+          const newPasswordInput = document.getElementById('newPassword');
+          if (newPasswordInput) newPasswordInput.focus();
+        }, 100);
+      }
+    });
+  }
+
+  if (logoutMenuBtn) {
+    console.log('✅ Logout button event listener attached');
+    logoutMenuBtn.addEventListener('click', async (e) => {
+      console.log('🚪 Logout button clicked');
+      e.preventDefault();
+      closeUserDropdown();
+      
+      try {
+        // Logout
+        await db.auth.signOut();
+        showLogin();
+        showToast('ออกจากระบบสำเร็จ', 'success', 2000);
+      } catch (error) {
+        console.error('❌ Logout error:', error);
+        showToast('เกิดข้อผิดพลาดในการออกจากระบบ', 'error');
+      }
+    });
+  } else {
+    console.error('❌ Logout button not found');
+  }
+
+  // Make closeUserDropdown available globally
+  window.closeUserDropdown = closeUserDropdown;
+}
+
+// Update dropdown user info
+async function updateDropdownUserInfo() {
+  try {
+    const { data: { user }, error } = await db.auth.getUser();
+    
+    if (error) throw error;
+    
+    if (user) {
+      // Update dropdown email
+      const dropdownEmail = document.getElementById('dropdownEmail');
+      if (dropdownEmail) {
+        dropdownEmail.textContent = user.email;
+      }
+      
+      // Format created date for meta
+      const createdDate = new Date(user.created_at);
+      const formattedDate = createdDate.toLocaleDateString('th-TH', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+      const dropdownMeta = document.getElementById('dropdownMeta');
+      if (dropdownMeta) {
+        dropdownMeta.textContent = `สมาชิกตั้งแต่: ${formattedDate}`;
+      }
+      
+      // Update dropdown avatar
+      const savedAvatar = localStorage.getItem('userAvatar');
+      const avatarToUse = savedAvatar || user.email.charAt(0).toUpperCase();
+      
+      const dropdownAvatar = document.querySelector('.dropdown-avatar');
+      if (dropdownAvatar) {
+        dropdownAvatar.textContent = avatarToUse;
+      }
+    }
+  } catch (error) {
+    console.error('Error updating dropdown user info:', error);
+  }
+}
+
+/****************************
+ * 👤 USER PROFILE MODAL
+ ****************************/
+
+function setupProfileModal() {
+  const userProfileModal = document.getElementById('userProfileModal');
+  const closeProfileModal = document.getElementById('closeProfileModal');
+  const refreshProfileBtn = document.getElementById('refreshProfileBtn');
+  const changePasswordBtn = document.getElementById('changePasswordBtn');
+
+  if (!userProfileModal) return;
+
+  // Close profile modal
+  if (closeProfileModal) {
+    closeProfileModal.addEventListener('click', () => {
+      userProfileModal.classList.add('d-none');
+    });
+  }
+
+  // Close on backdrop click
+  userProfileModal.addEventListener('click', (e) => {
+    if (e.target === userProfileModal) {
+      userProfileModal.classList.add('d-none');
+    }
+  });
+
+  // Refresh profile data
+  if (refreshProfileBtn) {
+    refreshProfileBtn.addEventListener('click', async () => {
+      refreshProfileBtn.disabled = true;
+      refreshProfileBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังโหลด...';
+      
+      await loadUserProfile();
+      
+      refreshProfileBtn.disabled = false;
+      refreshProfileBtn.innerHTML = '🔄 รีเฟรชข้อมูล';
+      showToast('โหลดข้อมูลสำเร็จ', 'success', 2000);
+    });
+  }
+
+  // Change password handler
+  if (changePasswordBtn) {
+    changePasswordBtn.addEventListener('click', () => {
+      // Close profile modal and open password modal
+      userProfileModal.classList.add('d-none');
+      const changePasswordModal = document.getElementById('changePasswordModal');
+      if (changePasswordModal) {
+        changePasswordModal.classList.remove('d-none');
+        
+        // Clear form
+        const changePasswordForm = document.getElementById('changePasswordForm');
+        if (changePasswordForm) changePasswordForm.reset();
+        
+        const passwordMatchError = document.getElementById('passwordMatchError');
+        if (passwordMatchError) passwordMatchError.classList.remove('show');
+        
+        // Reset strength indicator
+        const strengthFill = document.querySelector('#newPasswordStrength .strength-fill');
+        const strengthLabel = document.querySelector('#newPasswordStrength .strength-label');
+        if (strengthFill) strengthFill.className = 'strength-fill';
+        if (strengthLabel) {
+          strengthLabel.className = 'strength-label';
+          strengthLabel.textContent = '-';
+        }
+        
+        // Focus on first input
+        setTimeout(() => {
+          const newPasswordInput = document.getElementById('newPassword');
+          if (newPasswordInput) newPasswordInput.focus();
+        }, 100);
+      }
+    });
+  }
+}
+
+/****************************
+ * 🔐 CHANGE PASSWORD MODAL
+ ****************************/
+
+function setupChangePasswordModal() {
+  const changePasswordModal = document.getElementById('changePasswordModal');
+  const closePasswordModal = document.getElementById('closePasswordModal');
+  const cancelPasswordChange = document.getElementById('cancelPasswordChange');
+  const changePasswordForm = document.getElementById('changePasswordForm');
+  const newPasswordInput = document.getElementById('newPassword');
+  const confirmPasswordInput = document.getElementById('confirmPassword');
+  const passwordMatchError = document.getElementById('passwordMatchError');
+  const toggleNewPassword = document.getElementById('toggleNewPassword');
+  const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+
+  if (!changePasswordModal) return;
+
+  // Close password modal handlers
+  function closeModal() {
+    changePasswordModal.classList.add('d-none');
+    if (changePasswordForm) changePasswordForm.reset();
+    if (passwordMatchError) passwordMatchError.classList.remove('show');
+  }
+
+  if (closePasswordModal) {
+    closePasswordModal.addEventListener('click', closeModal);
+  }
+
+  if (cancelPasswordChange) {
+    cancelPasswordChange.addEventListener('click', closeModal);
+  }
+
+  // Close on backdrop click
+  changePasswordModal.addEventListener('click', (e) => {
+    if (e.target === changePasswordModal) {
+      closeModal();
+    }
+  });
+
+  // Password toggle buttons
+  if (toggleNewPassword && newPasswordInput) {
+    toggleNewPassword.addEventListener('click', () => {
+      const eyeIcon = toggleNewPassword.querySelector('.eye-icon');
+      const eyeOffIcon = toggleNewPassword.querySelector('.eye-off-icon');
+      
+      if (newPasswordInput.type === 'password') {
+        newPasswordInput.type = 'text';
+        if (eyeIcon) eyeIcon.classList.add('d-none');
+        if (eyeOffIcon) eyeOffIcon.classList.remove('d-none');
+      } else {
+        newPasswordInput.type = 'password';
+        if (eyeIcon) eyeIcon.classList.remove('d-none');
+        if (eyeOffIcon) eyeOffIcon.classList.add('d-none');
+      }
+    });
+  }
+
+  if (toggleConfirmPassword && confirmPasswordInput) {
+    toggleConfirmPassword.addEventListener('click', () => {
+      const eyeIcon = toggleConfirmPassword.querySelector('.eye-icon');
+      const eyeOffIcon = toggleConfirmPassword.querySelector('.eye-off-icon');
+      
+      if (confirmPasswordInput.type === 'password') {
+        confirmPasswordInput.type = 'text';
+        if (eyeIcon) eyeIcon.classList.add('d-none');
+        if (eyeOffIcon) eyeOffIcon.classList.remove('d-none');
+      } else {
+        confirmPasswordInput.type = 'password';
+        if (eyeIcon) eyeIcon.classList.remove('d-none');
+        if (eyeOffIcon) eyeOffIcon.classList.add('d-none');
+      }
+    });
+  }
+
+  // Password strength checker
+  if (newPasswordInput) {
+    newPasswordInput.addEventListener('input', () => {
+      const password = newPasswordInput.value;
+      const strengthFill = document.querySelector('#newPasswordStrength .strength-fill');
+      const strengthLabel = document.querySelector('#newPasswordStrength .strength-label');
+      
+      if (!strengthFill || !strengthLabel) return;
+      
+      const strength = checkPasswordStrength(password);
+      
+      strengthFill.className = 'strength-fill';
+      strengthLabel.className = 'strength-label';
+      
+      if (password.length === 0) {
+        strengthLabel.textContent = '-';
+        return;
+      }
+      
+      if (strength === 'weak') {
+        strengthFill.classList.add('weak');
+        strengthLabel.classList.add('weak');
+        strengthLabel.textContent = 'อ่อนแอ';
+      } else if (strength === 'medium') {
+        strengthFill.classList.add('medium');
+        strengthLabel.classList.add('medium');
+        strengthLabel.textContent = 'ปานกลาง';
+      } else if (strength === 'strong') {
+        strengthFill.classList.add('strong');
+        strengthLabel.classList.add('strong');
+        strengthLabel.textContent = 'แข็งแกร่ง';
+      }
+      
+      checkPasswordsMatch();
+    });
+  }
+
+  // Check password match
+  function checkPasswordsMatch() {
+    if (!newPasswordInput || !confirmPasswordInput || !passwordMatchError) return;
+    
+    const newPassword = newPasswordInput.value;
+    const confirmPassword = confirmPasswordInput.value;
+    
+    if (confirmPassword.length === 0) {
+      passwordMatchError.classList.remove('show');
+      confirmPasswordInput.classList.remove('is-invalid');
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      passwordMatchError.textContent = '❌ รหัสผ่านไม่ตรงกัน';
+      passwordMatchError.classList.add('show');
+      confirmPasswordInput.classList.add('is-invalid');
+    } else {
+      passwordMatchError.textContent = '✓ รหัสผ่านตรงกัน';
+      passwordMatchError.classList.remove('show');
+      confirmPasswordInput.classList.remove('is-invalid');
+    }
+  }
+
+  if (confirmPasswordInput) {
+    confirmPasswordInput.addEventListener('input', checkPasswordsMatch);
+  }
+
+  // Form submission
+  if (changePasswordForm) {
+    console.log('✅ Change password form event listener attached');
+    changePasswordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      console.log('🔄 Form submitted with values:', { newPassword: '***', confirmPassword: '***' });
+      
+      if (!newPasswordInput || !confirmPasswordInput) return;
+      
+      const newPassword = newPasswordInput.value;
+      const confirmPassword = confirmPasswordInput.value;
+      const submitBtn = document.getElementById('submitPasswordChange');
+      
+      if (!submitBtn) {
+        console.error('❌ Submit button not found');
+        return;
+      }
+      
+      const btnText = submitBtn.querySelector('.btn-text');
+      const spinner = submitBtn.querySelector('.spinner-border');
+      
+      if (newPassword.length < 6) {
+        showToast('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร', 'warning');
+        return;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        showToast('รหัสผ่านไม่ตรงกัน กรุณาลองใหม่', 'error');
+        return;
+      }
+      
+      try {
+        submitBtn.disabled = true;
+        if (btnText) btnText.classList.add('d-none');
+        if (spinner) spinner.classList.remove('d-none');
+        
+        const { data, error } = await db.auth.updateUser({
+          password: newPassword
+        });
+        
+        if (error) throw error;
+        
+        // Clear remembered credentials
+        localStorage.removeItem('rememberedEmail');
+        
+        // Clear all password fields
+        document.querySelectorAll('input[type="password"]').forEach(field => {
+          field.value = '';
+        });
+        
+        showToast('เปลี่ยนรหัสผ่านสำเร็จ! กำลังออกจากระบบ...', 'success', 3000);
+        closeModal();
+        
+        // Auto logout after 1.5 seconds
+        setTimeout(async () => {
+          await db.auth.signOut();
+          showLogin();
+          showToast('กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่', 'info', 5000);
+        }, 1500);
+        
+      } catch (error) {
+        console.error('Error changing password:', error);
+        showToast('ไม่สามารถเปลี่ยนรหัสผ่านได้: ' + error.message, 'error');
+        submitBtn.disabled = false;
+        if (btnText) btnText.classList.remove('d-none');
+        if (spinner) spinner.classList.add('d-none');
+      }
+    });
+  }
+}
+
+// Change Password Modal handlers moved to setupChangePasswordModal function
+
+// Change avatar functionality
+function setupAvatarPicker() {
+  const changeAvatarBtn = document.getElementById('changeAvatarBtn');
+  const avatarOptions = document.getElementById('avatarOptions');
+
+  if (!changeAvatarBtn || !avatarOptions) return;
+
+  changeAvatarBtn.addEventListener('click', () => {
+    avatarOptions.classList.toggle('d-none');
+  });
+  
+  // Handle avatar selection
+  const avatarButtons = document.querySelectorAll('.avatar-option');
+  avatarButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const selectedAvatar = btn.dataset.avatar;
+      
+      // Update all avatar displays
+      const profileAvatarLarge = document.getElementById('profileAvatarLarge');
+      if (profileAvatarLarge) {
+        profileAvatarLarge.textContent = selectedAvatar;
+      }
+      
+      const userAvatars = document.querySelectorAll('.user-avatar');
+      userAvatars.forEach(avatar => {
+        avatar.textContent = selectedAvatar;
+      });
+      
+      const dropdownAvatar = document.querySelector('.dropdown-avatar');
+      if (dropdownAvatar) {
+        dropdownAvatar.textContent = selectedAvatar;
+      }
+      
+      // Save to localStorage
+      localStorage.setItem('userAvatar', selectedAvatar);
+      
+      // Hide options and show success
+      avatarOptions.classList.add('d-none');
+      showToast('เปลี่ยนรูปโปรไฟล์สำเร็จ!', 'success', 2000);
+    });
+  });
+}
+
+// Load user profile data
+async function loadUserProfile() {
+  try {
+    const { data: { user }, error } = await db.auth.getUser();
+    
+    if (error) throw error;
+    
+    if (user) {
+      // Update email displays
+      document.getElementById('profileEmailDisplay').textContent = user.email;
+      
+      // Format created date
+      const createdDate = new Date(user.created_at);
+      const formattedDate = createdDate.toLocaleDateString('th-TH', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      document.getElementById('profileCreatedAt').textContent = `สมาชิกตั้งแต่: ${formattedDate}`;
+      
+      // Last sign in
+      if (user.last_sign_in_at) {
+        const lastSignIn = new Date(user.last_sign_in_at);
+        const timeAgo = getTimeAgo(lastSignIn);
+        document.getElementById('lastSignIn').textContent = timeAgo;
+      } else {
+        document.getElementById('lastSignIn').textContent = 'ไม่ทราบ';
+      }
+      
+      // Email verification status
+      const emailVerifiedEl = document.getElementById('emailVerified');
+      if (user.email_confirmed_at) {
+        emailVerifiedEl.innerHTML = '<span class="badge badge-success">✓ ยืนยันแล้ว</span>';
+      } else {
+        emailVerifiedEl.innerHTML = '<span class="badge badge-warning">ยังไม่ยืนยัน</span>';
+      }
+      
+      // Load saved avatar or use first letter of email
+      const savedAvatar = localStorage.getItem('userAvatar');
+      const avatarToUse = savedAvatar || user.email.charAt(0).toUpperCase();
+      
+      document.getElementById('profileAvatarLarge').textContent = avatarToUse;
+      const userAvatars = document.querySelectorAll('.user-avatar');
+      userAvatars.forEach(avatar => {
+        avatar.textContent = avatarToUse;
+      });
+    }
+  } catch (error) {
+    console.error('Error loading profile:', error);
+    showToast('ไม่สามารถโหลดข้อมูลโปรไฟล์ได้', 'error');
+  }
+}
+
+// Helper function to calculate time ago
+function getTimeAgo(date) {
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  if (diffMins < 1) return 'เมื่อสักครู่';
+  if (diffMins < 60) return `${diffMins} นาทีที่แล้ว`;
+  if (diffHours < 24) return `${diffHours} ชั่วโมงที่แล้ว`;
+  if (diffDays < 30) return `${diffDays} วันที่แล้ว`;
+  
+  return date.toLocaleDateString('th-TH', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+/****************************
+ * 💀 LOADING SKELETON SCREENS
+ ****************************/
+
+function showLoginSkeleton() {
+  const loginContainer = document.getElementById('loginContainer');
+  const originalContent = loginContainer.innerHTML;
+  
+  loginContainer.innerHTML = `
+    <div class="skeleton-card">
+      <div class="skeleton skeleton-title"></div>
+      <div class="skeleton skeleton-input"></div>
+      <div class="skeleton skeleton-input"></div>
+      <div class="skeleton skeleton-button"></div>
+      <div class="skeleton skeleton-text short" style="margin-top: 1rem;"></div>
+    </div>
+  `;
+  
+  return originalContent;
+}
+
+function showTableSkeleton() {
+  const dataTableBody = document.getElementById('dataTableBody');
+  if (!dataTableBody) return;
+  
+  dataTableBody.innerHTML = '';
+  
+  for (let i = 0; i < 5; i++) {
+    const row = document.createElement('tr');
+    row.className = 'skeleton-table-row';
+    row.innerHTML = `
+      <td class="skeleton-table-cell">
+        <div class="skeleton skeleton-text"></div>
+      </td>
+      <td class="skeleton-table-cell">
+        <div class="skeleton skeleton-text"></div>
+      </td>
+      <td class="skeleton-table-cell">
+        <div class="skeleton skeleton-text short"></div>
+      </td>
+      <td class="skeleton-table-cell">
+        <div class="skeleton skeleton-text medium"></div>
+      </td>
+      <td class="skeleton-table-cell">
+        <div class="skeleton skeleton-text short"></div>
+      </td>
+    `;
+    dataTableBody.appendChild(row);
+  }
+}
+
+function hideSkeletons() {
+  const skeletons = document.querySelectorAll('.skeleton, .skeleton-card, .skeleton-table-row');
+  skeletons.forEach(el => {
+    el.style.display = 'none';
+  });
 }
 
 /****************************

@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="PWA Vanilla JavaScript with Supabase Authentication" />
 
-  <title>PWA Vanilla JS</title>
+  <title>PWA Vanilla JS - เข้าสู่ระบบ</title>
 
   <!-- Favicon -->
   <link rel="icon" href="/favicon.ico" />
@@ -29,37 +30,121 @@
 
 <body>
 
+  <!-- Skip to main content link for screen readers -->
+  <a href="#main-content" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
+
+  <!-- Live region for screen reader announcements -->
+  <div id="ariaLiveRegion" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Dark Mode Toggle -->
+  <button id="darkModeToggle" class="dark-mode-toggle" aria-label="สลับโหมดสว่าง/มืด" title="สลับธีม">
+    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+    <svg class="moon-icon d-none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </svg>
+  </button>
+
   <!-- Login Container - แสดงเมื่อยังไม่ได้ล็อกอิน -->
-  <div id="loginContainer" class="login-container">
+  <div id="loginContainer" class="login-container" role="main" aria-label="Login page">
     <div class="login-card">
       <div class="login-header">
-        <h1>🔐 เข้าสู่ระบบ</h1>
+        <h1 id="loginTitle">🔐 เข้าสู่ระบบ</h1>
         <p class="text-muted">PWA Vanilla JS with Supabase Auth</p>
       </div>
 
-      <form id="loginForm" class="login-form">
+      <form id="loginForm" class="login-form" aria-labelledby="loginTitle" novalidate>
         <div class="mb-3">
           <label for="loginEmail" class="form-label">อีเมล</label>
-          <input 
-            type="email" 
-            id="loginEmail" 
-            class="form-control" 
-            placeholder="example@email.com"
-            required 
-          />
+          <div class="email-input-wrapper">
+            <input 
+              type="email" 
+              id="loginEmail"
+              name="email" 
+              class="form-control" 
+              placeholder="example@email.com"
+              autocomplete="email username"
+              tabindex="1"
+              required 
+            />
+            <span class="email-validation-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="check-icon d-none">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="x-icon d-none">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </span>
+          </div>
+          <div id="loginEmailError" class="email-error d-none"></div>
         </div>
 
         <div class="mb-3">
-          <label for="loginPassword" class="form-label">รหัสผ่าน</label>
+          <label for="loginPassword" class="form-label">
+            รหัสผ่าน
+            <button type="button" class="info-icon" id="passwordRequirementsBtn" aria-label="แสดงข้อกำหนดรหัสผ่าน" tabindex="-1">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+            </button>
+          </label>
+          
+          <!-- Password Requirements Tooltip -->
+          <div id="passwordRequirements" class="password-requirements d-none" role="tooltip">
+            <div class="requirements-header">
+              <strong>ข้อกำหนดรหัสผ่าน:</strong>
+            </div>
+            <ul class="requirements-list">
+              <li id="req-length" class="requirement-item">
+                <span class="req-icon">○</span>
+                <span class="req-text">อย่างน้อย 8 ตัวอักษร</span>
+              </li>
+              <li id="req-uppercase" class="requirement-item">
+                <span class="req-icon">○</span>
+                <span class="req-text">ตัวพิมพ์ใหญ่ (A-Z)</span>
+              </li>
+              <li id="req-lowercase" class="requirement-item">
+                <span class="req-icon">○</span>
+                <span class="req-text">ตัวพิมพ์เล็ก (a-z)</span>
+              </li>
+              <li id="req-number" class="requirement-item">
+                <span class="req-icon">○</span>
+                <span class="req-text">ตัวเลข (0-9)</span>
+              </li>
+              <li id="req-special" class="requirement-item">
+                <span class="req-icon">○</span>
+                <span class="req-text">อักขระพิเศษ (!@#$%^&*)</span>
+              </li>
+            </ul>
+          </div>
+          
           <div class="password-input-wrapper">
             <input 
               type="password" 
-              id="loginPassword" 
+              id="loginPassword"
+              name="password" 
               class="form-control" 
               placeholder="••••••••"
+              autocomplete="current-password"
+              tabindex="2"
               required 
             />
-            <button type="button" class="password-toggle-btn" id="togglePassword" aria-label="Toggle password visibility">
+            <button type="button" class="password-toggle-btn" id="togglePassword" aria-label="Toggle password visibility" tabindex="-1">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                 <circle cx="12" cy="12" r="3"></circle>
@@ -71,21 +156,24 @@
             </button>
           </div>
           <div id="passwordStrength" class="password-strength mt-1 d-none"></div>
+          <div class="text-end mt-2">
+            <a href="#" id="forgotPasswordLink" class="forgot-password-link" tabindex="3">ลืมรหัสผ่าน?</a>
+          </div>
         </div>
 
         <div class="mb-3 form-check">
-          <input type="checkbox" class="form-check-input" id="rememberMe">
+          <input type="checkbox" class="form-check-input" id="rememberMe" tabindex="4">
           <label class="form-check-label" for="rememberMe">
             จำฉันไว้ในระบบ
           </label>
         </div>
 
         <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-primary flex-fill" id="loginSubmitBtn">
+          <button type="submit" class="btn btn-primary flex-fill" id="loginSubmitBtn" tabindex="5">
             <span class="btn-text">เข้าสู่ระบบ</span>
             <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
           </button>
-          <button type="button" id="signupBtn" class="btn btn-secondary flex-fill">
+          <button type="button" id="signupBtn" class="btn btn-secondary flex-fill" tabindex="6">
             <span class="btn-text">สมัครสมาชิก</span>
             <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
           </button>
@@ -93,6 +181,17 @@
       </form>
 
       <div id="authMessage" class="alert d-none mt-3"></div>
+
+      <!-- Keyboard Shortcuts Hint -->
+      <div class="keyboard-hints mt-3">
+        <small class="text-muted">
+          💡 <strong>Shortcuts:</strong> 
+          <kbd>Alt+L</kbd> Email, 
+          <kbd>Alt+P</kbd> Password, 
+          <kbd>Alt+F</kbd> Forgot password, 
+          <kbd>ESC</kbd> Close
+        </small>
+      </div>
 
       <!-- OAuth Login Options -->
       <div class="oauth-divider mt-4 mb-4">
@@ -119,18 +218,286 @@
     </div>
   </div>
 
+  <!-- Forgot Password Modal -->
+  <div id="forgotPasswordModal" class="modal-overlay d-none" role="dialog" aria-labelledby="forgotPasswordTitle" aria-modal="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="forgotPasswordTitle">🔑 รีเซ็ตรหัสผ่าน</h3>
+        <button type="button" class="modal-close-btn" id="closeForgotModal" aria-label="ปิดหน้าต่าง">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3">กรุณากรอกอีเมลของคุณ เราจะส่งลิงก์สำหรับรีเซ็ตรหัสผ่านไปให้</p>
+        <form id="forgotPasswordForm" aria-label="Forgot password form">\n          <div class="mb-3">
+            <label for="resetEmail" class="form-label">อีเมล</label>
+            <div class="email-input-wrapper">
+              <input 
+                type="email" 
+                id="resetEmail"
+                name="reset-email" 
+                class="form-control" 
+                placeholder="example@email.com"
+                autocomplete="email"
+                required 
+              />
+              <span class="email-validation-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="check-icon d-none">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="x-icon d-none">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </span>
+            </div>
+            <div id="resetEmailError" class="email-error d-none"></div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100" id="resetPasswordBtn">
+            <span class="btn-text">ส่งลิงก์รีเซ็ตรหัสผ่าน</span>
+            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+          </button>
+        </form>
+        <div id="resetMessage" class="alert d-none mt-3"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Main App Container - แสดงเมื่อล็อกอินแล้ว -->
   <div id="appContainer" class="d-none">
     
     <!-- User Info Bar -->
     <div class="user-bar">
-      <div class="user-info">
-        <span>👤 <span id="userEmail">user@example.com</span></span>
+      <h2 class="app-title">🚀 PWA Vanilla JS</h2>
+      
+      <div class="user-menu-wrapper">
+        <button id="userMenuBtn" class="user-menu-btn" aria-label="User menu" aria-expanded="false">
+          <span class="user-avatar">E</span>
+          <span id="userEmail" class="user-email">user@example.com</span>
+          <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+        
+        <div id="userDropdown" class="user-dropdown d-none" role="menu">
+          <div class="dropdown-header">
+            <div class="dropdown-user-info">
+              <div class="dropdown-avatar">E</div>
+              <div class="dropdown-user-details">
+                <div class="dropdown-username" id="dropdownEmail">user@example.com</div>
+                <div class="dropdown-user-meta" id="dropdownMeta">สมาชิกตั้งแต่: -</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="dropdown-divider"></div>
+          
+          <div class="dropdown-section">
+            <a href="#" class="dropdown-item" id="openProfileMenu">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              โปรไฟล์ของคุณ
+            </a>
+            <a href="#" class="dropdown-item" id="settingsMenu">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 1v6m0 6v6m-9-9h6m6 0h6"></path>
+              </svg>
+              ตั้งค่า
+            </a>
+            <a href="#" class="dropdown-item" id="changePasswordMenu">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              เปลี่ยนรหัสผ่าน
+            </a>
+          </div>
+          
+          <div class="dropdown-divider"></div>
+          
+          <div class="dropdown-section">
+            <a href="#" class="dropdown-item" id="logoutMenuBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              ออกจากระบบ
+            </a>
+          </div>
+        </div>
       </div>
-      <button id="logoutBtn" class="btn btn-sm btn-outline-secondary">
-        ออกจากระบบ
-      </button>
     </div>
+
+  <!-- User Profile Modal -->
+  <div id="userProfileModal" class="modal-overlay d-none" role="dialog" aria-labelledby="profileTitle" aria-modal="true">
+    <div class="modal-content profile-modal">
+      <div class="modal-header">
+        <h3 id="profileTitle">👤 โปรไฟล์ผู้ใช้</h3>
+        <button type="button" class="modal-close-btn" id="closeProfileModal" aria-label="ปิดหน้าต่าง">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="profile-section">
+          <div class="profile-avatar-large" id="avatarPreview">
+            <span id="profileAvatarLarge">👤</span>
+          </div>
+          <div class="avatar-picker">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="changeAvatarBtn">
+              📷 เปลี่ยนรูป
+            </button>
+          </div>
+          <div id="avatarOptions" class="avatar-options d-none">
+            <p class="text-muted small mb-2">เลือกไอคอน:</p>
+            <div class="avatar-grid">
+              <button class="avatar-option" data-avatar="👤">👤</button>
+              <button class="avatar-option" data-avatar="😀">😀</button>
+              <button class="avatar-option" data-avatar="😎">😎</button>
+              <button class="avatar-option" data-avatar="🤠">🤠</button>
+              <button class="avatar-option" data-avatar="🥳">🥳</button>
+              <button class="avatar-option" data-avatar="🤖">🤖</button>
+              <button class="avatar-option" data-avatar="👻">👻</button>
+              <button class="avatar-option" data-avatar="🐱">🐱</button>
+              <button class="avatar-option" data-avatar="🐶">🐶</button>
+              <button class="avatar-option" data-avatar="🦊">🦊</button>
+              <button class="avatar-option" data-avatar="🐼">🐼</button>
+              <button class="avatar-option" data-avatar="🐨">🐨</button>
+              <button class="avatar-option" data-avatar="🦁">🦁</button>
+              <button class="avatar-option" data-avatar="🐯">🐯</button>
+              <button class="avatar-option" data-avatar="🦄">🦄</button>
+              <button class="avatar-option" data-avatar="⭐">⭐</button>
+              <button class="avatar-option" data-avatar="🔥">🔥</button>
+              <button class="avatar-option" data-avatar="💎">💎</button>
+              <button class="avatar-option" data-avatar="🚀">🚀</button>
+              <button class="avatar-option" data-avatar="🎮">🎮</button>
+            </div>
+          </div>
+          <div class="profile-info">
+            <h4 id="profileEmailDisplay">user@example.com</h4>
+            <p class="text-muted" id="profileCreatedAt">สมาชิกตั้งแต่: กำลังโหลด...</p>
+          </div>
+        </div>
+        
+        <div class="profile-stats">
+          <div class="stat-item">
+            <span class="stat-label">เข้าสู่ระบบครั้งล่าสุด</span>
+            <span class="stat-value" id="lastSignIn">กำลังโหลด...</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">สถานะอีเมล</span>
+            <span class="stat-value" id="emailVerified">
+              <span class="badge badge-warning">ยังไม่ยืนยัน</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="profile-actions">
+          <button class="btn btn-outline-primary w-100 mb-2" id="changePasswordBtn">
+            🔐 เปลี่ยนรหัสผ่าน
+          </button>
+          <button class="btn btn-outline-secondary w-100" id="refreshProfileBtn">
+            🔄 รีเฟรชข้อมูล
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Password Modal -->
+  <div id="changePasswordModal" class="modal-overlay d-none" role="dialog" aria-labelledby="changePasswordTitle" aria-modal="true">
+    <div class="modal-content password-modal">
+      <div class="modal-header">
+        <h3 id="changePasswordTitle">🔐 เปลี่ยนรหัสผ่าน</h3>
+        <button type="button" class="modal-close-btn" id="closePasswordModal" aria-label="ปิดหน้าต่าง">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-3">รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร</p>
+        
+        <form id="changePasswordForm">
+          <div class="mb-3">
+            <label for="newPassword" class="form-label">รหัสผ่านใหม่</label>
+            <div class="password-input-wrapper">
+              <input 
+                type="password" 
+                class="form-control" 
+                id="newPassword" 
+                placeholder="กรอกรหัสผ่านใหม่"
+                required
+                minlength="6"
+                autocomplete="new-password"
+              />
+              <button type="button" class="password-toggle-btn" id="toggleNewPassword" aria-label="แสดง/ซ่อนรหัสผ่าน">
+                <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg class="eye-off-icon d-none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="confirmPassword" class="form-label">ยืนยันรหัสผ่าน</label>
+            <div class="password-input-wrapper">
+              <input 
+                type="password" 
+                class="form-control" 
+                id="confirmPassword" 
+                placeholder="กรอกรหัสผ่านอีกครั้ง"
+                required
+                minlength="6"
+                autocomplete="new-password"
+              />
+              <button type="button" class="password-toggle-btn" id="toggleConfirmPassword" aria-label="แสดง/ซ่อนรหัสผ่าน">
+                <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg class="eye-off-icon d-none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+            <div id="passwordMatchError" class="invalid-feedback"></div>
+          </div>
+          
+          <div class="password-strength-indicator mb-3" id="newPasswordStrength">
+            <div class="strength-bar">
+              <div class="strength-fill"></div>
+            </div>
+            <div class="strength-text">ความแข็งแกร่ง: <span class="strength-label">-</span></div>
+          </div>
+          
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="cancelPasswordChange">ยกเลิก</button>
+            <button type="submit" class="btn btn-primary" id="submitPasswordChange">
+              <span class="btn-text">บันทึก</span>
+              <span class="spinner-border spinner-border-sm d-none"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
   <div class="app">
     <h1>👋 Welcome</h1>
