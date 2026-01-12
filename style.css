@@ -1,155 +1,390 @@
-/* =========================
-   DESIGN TOKENS (UNTITLED UI)
-   ========================= */
+/* =========================================================
+   🎨 DESIGN TOKENS - shadcn/ui Style (Pure CSS)
+   ========================================================= 
+   
+   ธีม: shadcn/ui design system
+   ลักษณะ: คมชัด, มินิมอล, ระบบสีที่ชัดเจน
+   ไม่ใช้: React, Tailwind, shadcn components
+   ใช้: Pure CSS เท่านั้น
+*/
 
 :root {
-  --ui-bg: #f9fafb;
-  --ui-card: #ffffff;
-  --ui-border: #e5e7eb;
-  --ui-text: #111827;
-  --ui-muted: #6b7280;
+  /* สีพื้นฐาน (Base Colors) */
+  --background: 0 0% 100%;           /* พื้นหลังหลัก - ขาว */
+  --foreground: 222.2 84% 4.9%;      /* ตัวหนังสือหลัก - เกือบดำ */
 
-  --ui-primary: #2563eb;
-  --ui-danger: #dc2626;
-  --ui-success: #16a34a;
-  --ui-warning: #f59e0b;
+  /* สีการ์ด (Card Colors) */
+  --card: 0 0% 100%;                 /* พื้นการ์ด - ขาว */
+  --card-foreground: 222.2 84% 4.9%; /* ตัวหนังสือในการ์ด */
 
-  --ui-radius: 12px;
-  --ui-radius-sm: 8px;
-  --ui-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
-  --ui-shadow-hover: 0 4px 12px rgba(16, 24, 40, 0.1);
+  /* สี Popover/Dropdown */
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+
+  /* สีหลัก (Primary - เน้น) */
+  --primary: 222.2 47.4% 11.2%;      /* เทาดำ - เป็นเอกลักษณ์ของ shadcn */
+  --primary-foreground: 210 40% 98%; /* ขาวนวล */
+
+  /* สีรอง (Secondary) */
+  --secondary: 210 40% 96.1%;        /* เทาอ่อน */
+  --secondary-foreground: 222.2 47.4% 11.2%;
+
+  /* สีพื้นหลังอ่อน (Muted) */
+  --muted: 210 40% 96.1%;            /* เทาอ่อนมาก */
+  --muted-foreground: 215.4 16.3% 46.9%; /* เทากลาง */
+
+  /* สี Accent */
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+
+  /* สีอันตราย (Destructive) */
+  --destructive: 0 84.2% 60.2%;      /* แดง */
+  --destructive-foreground: 210 40% 98%;
+
+  /* สีขอบและ Input */
+  --border: 214.3 31.8% 91.4%;       /* เทาอ่อนสำหรับเส้นขอบ */
+  --input: 214.3 31.8% 91.4%;        /* สีเดียวกับ border */
+  --ring: 222.2 84% 4.9%;            /* วงแหวน focus - เข้ม */
+
+  /* มุมโค้ง (Border Radius) - shadcn ชอบมุมนุ่มนวล */
+  --radius: 0.5rem;                  /* 8px - ค่ามาตรฐาน */
 }
 
-/* =========================
-   GLOBAL
-   ========================= */
+/* โหมดมด (Dark Mode) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+/* =========================================================
+   🌐 GLOBAL STYLES
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+  border-color: hsl(var(--border));
+}
 
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
-  background-color: var(--ui-bg);
-  color: var(--ui-text);
-  padding: 24px;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
+               "Helvetica Neue", Arial, sans-serif, 
+               "Apple Color Emoji", "Segoe UI Emoji";
+  font-size: 0.875rem;         /* 14px - ตัวหนังสือขนาดกลาง */
+  line-height: 1.5;
+  padding: 1.5rem;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* utility */
-.hidden {
-  display: none !important;
+/* Typography - ตัวหนังสือ */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0 0 1rem 0;
+  color: hsl(var(--foreground));
 }
 
-/* =========================
-   CARD / SECTION
-   ========================= */
+h1 { font-size: 2.25rem; }   /* 36px */
+h2 { font-size: 1.875rem; }  /* 30px */
+h3 { font-size: 1.5rem; }    /* 24px */
+
+/* =========================================================
+   � LOGIN PAGE STYLES - หน้าล็อกอิน
+   ========================================================= */
+
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1rem;
+  background: linear-gradient(135deg, hsl(var(--muted)) 0%, hsl(var(--background)) 100%);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) + 4px);
+  padding: 2rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 
+              0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login-header h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: hsl(var(--foreground));
+}
+
+.login-header p {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.login-form .btn {
+  width: 100%;
+}
+
+/* Password Input with Toggle */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .form-control {
+  padding-right: 3rem;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  color: hsl(var(--muted-foreground));
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle-btn:hover {
+  color: hsl(var(--foreground));
+}
+
+.password-toggle-btn:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Password Strength Indicator */
+.password-strength {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.password-strength.weak {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.password-strength.medium {
+  background-color: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.password-strength.strong {
+  background-color: #d1fae5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+/* OAuth Divider */
+.oauth-divider {
+  position: relative;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.oauth-divider::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 1px;
+  background-color: hsl(var(--border));
+}
+
+.oauth-divider span {
+  position: relative;
+  background-color: hsl(var(--card));
+  padding: 0 1rem;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Loading Button State */
+.btn .spinner-border {
+  width: 1rem;
+  height: 1rem;
+  margin-left: 0.5rem;
+}
+
+.btn.loading .btn-text {
+  opacity: 0.6;
+}
+
+/* User Info Bar - แถบข้อมูลผู้ใช้ */
+.user-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.user-info {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+}
+
+#userEmail {
+  color: hsl(var(--muted-foreground));
+  margin-left: 0.25rem;
+}
+
+/* Gap utility */
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.flex-fill {
+  flex: 1 1 auto;
+}
+
+/* =========================================================
+   �📦 CARD & CONTAINERS - กล่องเนื้อหา
+   ========================================================= */
+
+.app {
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) + 4px);
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.app h1,
+.app h2 {
+  color: hsl(var(--card-foreground));
+}
 
 #tableContainer {
-  background: var(--ui-card);
-  padding: 20px;
-  border-radius: var(--ui-radius);
-  border: 1px solid var(--ui-border);
-  box-shadow: var(--ui-shadow);
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
 }
 
-/* =========================
-   TABLE
-   ========================= */
+/* =========================================================
+   📊 TABLE STYLES - ตาราง
+   ========================================================= */
 
 #dataTable {
-  margin-bottom: 0;
+  width: 100%;
   border-collapse: separate;
   border-spacing: 0;
+  font-size: 0.875rem;
 }
 
 #dataTable thead th {
-  background-color: #f3f4f6;
-  color: #374151;
-  font-weight: 600;
-  font-size: 14px;
-  border-bottom: 1px solid var(--ui-border);
-  padding: 12px;
+  background-color: hsl(var(--muted) / 0.5);
+  color: hsl(var(--muted-foreground));
+  font-weight: 500;
+  font-size: 0.875rem;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid hsl(var(--border));
   white-space: nowrap;
 }
 
 #dataTable td,
 #dataTable th {
-  padding: 12px;
+  padding: 0.75rem 1rem;
   vertical-align: middle;
-  font-size: 14px;
 }
 
 #dataTable tbody tr {
-  transition: background 0.15s ease;
+  border-bottom: 1px solid hsl(var(--border));
+  transition: background-color 0.15s ease;
 }
 
 #dataTable tbody tr:hover {
-  background-color: #f9fafb;
+  background-color: hsl(var(--muted) / 0.5);
 }
 
-/* =========================
-   BUTTONS (BOOTSTRAP OVERRIDE)
-   ========================= */
-
-.btn {
-  border-radius: var(--ui-radius-sm) !important;
-  font-weight: 500;
-  transition: all 0.15s ease;
+#dataTable tbody tr:last-child {
+  border-bottom: none;
 }
 
-.btn:hover {
-  box-shadow: var(--ui-shadow-hover);
-}
-
-.btn-primary {
-  background-color: var(--ui-primary);
-  border-color: var(--ui-primary);
-}
-
-.btn-danger {
-  background-color: var(--ui-danger);
-  border-color: var(--ui-danger);
-}
-
-.btn-success {
-  background-color: var(--ui-success);
-  border-color: var(--ui-success);
-}
-
-.btn-warning {
-  background-color: var(--ui-warning);
-  border-color: var(--ui-warning);
-  color: #000;
-}
-
-.btn-outline-secondary {
-  border-color: var(--ui-border);
-}
-
-/* =========================
-   EDIT INPUT
-   ========================= */
-
-#dataTable input.form-control-sm {
-  font-size: 14px;
-  border-radius: var(--ui-radius-sm);
-  border: 1px solid var(--ui-border);
-}
-
-/* =========================
-   SORTABLE HEADERS
-   ========================= */
-
+/* Sortable headers - หัวตารางที่กดเรียงได้ */
 .sortable {
   cursor: pointer;
   user-select: none;
+  transition: background-color 0.15s ease;
 }
 
 .sortable:hover {
-  background-color: rgba(0, 0, 0, 0.03);
+  background-color: hsl(var(--muted) / 0.8);
 }
 
 .sort-indicator {
-  margin-left: 6px;
+  margin-left: 0.5rem;
   opacity: 0.4;
 }
 
@@ -167,58 +402,298 @@ body {
   opacity: 1;
 }
 
-/* =========================
-   SEARCH / FILTER BAR
-   ========================= */
+/* =========================================================
+   🔘 BUTTONS - ปุ่มทั้งหมด (shadcn style)
+   ========================================================= */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  height: 2.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
+  user-select: none;
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--background)),
+              0 0 0 4px hsl(var(--ring));
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+/* Primary Button - ปุ่มหลัก */
+.btn-primary {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.btn-primary:hover {
+  background-color: hsl(var(--primary) / 0.9);
+}
+
+/* Secondary Button - ปุ่มรอง */
+.btn-secondary {
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  border-color: hsl(var(--border));
+}
+
+.btn-secondary:hover {
+  background-color: hsl(var(--secondary) / 0.8);
+}
+
+/* Success Button - ปุ่มสำเร็จ */
+.btn-success {
+  background-color: hsl(142.1 76.2% 36.3%);  /* เขียว */
+  color: white;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.btn-success:hover {
+  background-color: hsl(142.1 70% 33%);
+}
+
+/* Danger/Destructive Button - ปุ่มอันตราย */
+.btn-danger {
+  background-color: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+}
+
+.btn-danger:hover {
+  background-color: hsl(var(--destructive) / 0.9);
+}
+
+/* Info Button */
+.btn-info {
+  background-color: hsl(199 89% 48%);  /* ฟ้า */
+  color: white;
+}
+
+.btn-info:hover {
+  background-color: hsl(199 89% 43%);
+}
+
+/* Outline Buttons - ปุ่มขอบ */
+.btn-outline-secondary {
+  background-color: transparent;
+  border-color: hsl(var(--input));
+  color: hsl(var(--foreground));
+}
+
+.btn-outline-secondary:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+.btn-outline-danger {
+  background-color: transparent;
+  border-color: hsl(var(--destructive));
+  color: hsl(var(--destructive));
+}
+
+.btn-outline-danger:hover {
+  background-color: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+}
+
+/* Button Sizes - ขนาดปุ่ม */
+.btn-sm {
+  height: 2rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.btn-lg {
+  height: 2.75rem;
+  padding: 0.625rem 1.5rem;
+  font-size: 1rem;
+}
+
+/* Button Group */
+.btn-group .btn {
+  border-radius: var(--radius);
+}
+
+.dropdown-toggle::after {
+  margin-left: 0.5rem;
+}
+
+/* =========================================================
+   📝 FORM INPUTS - ช่องกรอกข้อมูล
+   ========================================================= */
+
+.form-control,
+.form-select,
+#dataTable input.form-control-sm {
+  display: block;
+  width: 100%;
+  height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--background));
+  border: 1px solid hsl(var(--input));
+  border-radius: var(--radius);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus,
+.form-select:focus {
+  outline: none;
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+}
+
+.form-control::placeholder {
+  color: hsl(var(--muted-foreground));
+  opacity: 0.8;
+}
+
+.form-label {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+}
+
+/* Input Group */
+.input-group {
+  display: flex;
+  position: relative;
+}
+
+.input-group-text {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: hsl(var(--muted-foreground));
+  background-color: hsl(var(--muted));
+  border: 1px solid hsl(var(--input));
+  border-radius: var(--radius);
+}
+
+.bg-primary {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+
+.bg-info {
+  background-color: hsl(199 89% 48%) !important;
+  color: white !important;
+}
+
+.text-white {
+  color: white !important;
+}
+
+/* =========================================================
+   🔍 SEARCH / FILTER BAR - แถบค้นหา
+   ========================================================= */
 
 .row.mb-3 {
-  margin-top: 24px !important;
-  margin-bottom: 24px !important;
-  border: 1px solid var(--ui-border);
-  border-radius: var(--ui-radius);
-  padding: 16px;
-  background: var(--ui-card);
+  display: flex;
+  flex-wrap: wrap;
+  margin: 1.5rem 0 !important;
+  padding: 1rem;
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 
-#searchInput,
-.form-select {
-  border-radius: var(--ui-radius-sm);
-  border: 1px solid var(--ui-border);
-}
-
-#searchInput:focus {
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+#searchInput {
+  border-radius: var(--radius);
 }
 
 #clearSearchBtn {
-  opacity: 0.4;
+  opacity: 0.7;
+  transition: opacity 0.15s;
 }
 
 #clearSearchBtn:hover {
   opacity: 1;
 }
 
-/* =========================
-   LOADING / ERROR
-   ========================= */
+/* =========================================================
+   📢 ALERTS - การแจ้งเตือน
+   ========================================================= */
+
+.alert {
+  position: relative;
+  padding: 1rem;
+  margin-top: 1rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+}
+
+.alert-info {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+}
+
+.alert-danger {
+  background-color: hsl(var(--destructive) / 0.1);
+  color: hsl(var(--destructive));
+  border-color: hsl(var(--destructive) / 0.5);
+}
+
+/* =========================================================
+   ⏳ LOADING SPINNER - ตัวหมุนโหลด
+   ========================================================= */
 
 #loadingSpinner {
   display: flex;
   align-items: center;
-  padding: 16px;
+  gap: 0.75rem;
+  padding: 1rem;
 }
 
-.alert {
-  margin-top: 12px;
-  border-radius: var(--ui-radius-sm);
+.spinner-border {
+  display: inline-block;
+  width: 1.5rem;
+  height: 1.5rem;
+  vertical-align: text-bottom;
+  border: 0.2rem solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spinner-border 0.75s linear infinite;
 }
 
-/* =========================
-   EXPANDABLE DETAILS
-   ========================= */
+@keyframes spinner-border {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.text-primary {
+  color: hsl(var(--primary)) !important;
+}
+
+/* =========================================================
+   📂 EXPANDABLE DETAILS - แถวที่ขยายได้
+   ========================================================= */
 
 .detail-row {
-  background-color: #f9fafb;
+  background-color: hsl(var(--muted) / 0.3);
 }
 
 .detail-content {
@@ -228,7 +703,7 @@ body {
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-6px);
+    transform: translateY(-0.5rem);
   }
   to {
     opacity: 1;
@@ -237,33 +712,375 @@ body {
 }
 
 .expand-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  font-size: 13px;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--background));
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .expand-btn:hover {
-  background-color: var(--ui-primary) !important;
-  color: white !important;
+  background-color: hsl(var(--accent)) !important;
+  border-color: hsl(var(--border)) !important;
 }
 
-/* =========================
-   TOAST
-   ========================= */
+/* =========================================================
+   🍞 TOAST NOTIFICATIONS - การแจ้งเตือนแบบทอสต์
+   ========================================================= */
 
 .toast-container {
+  position: fixed;
   z-index: 9999;
 }
 
 .toast {
-  border: 1px solid var(--ui-border);
-  border-radius: var(--ui-radius-sm);
-  box-shadow: var(--ui-shadow-hover);
-  backdrop-filter: blur(10px);
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 
+              0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 .toast .toast-body {
+  padding: 1rem;
   font-weight: 500;
-  font-size: 14px;
+  font-size: 0.875rem;
+  color: hsl(var(--card-foreground));
+}
+
+/* =========================================================
+   📄 PAGINATION - ปุ่มหน้า
+   ========================================================= */
+
+.pagination {
+  --bs-pagination-bg: hsl(var(--background));
+  --bs-pagination-border-color: hsl(var(--border));
+  --bs-pagination-hover-bg: hsl(var(--muted));
+  --bs-pagination-hover-border-color: hsl(var(--border));
+  --bs-pagination-focus-bg: hsl(var(--accent));
+  --bs-pagination-active-bg: hsl(var(--primary));
+  --bs-pagination-active-border-color: hsl(var(--primary));
+}
+
+.page-link {
+  border-radius: var(--radius);
+  margin: 0 0.125rem;
+  color: hsl(var(--foreground));
+  font-weight: 500;
+}
+
+/* =========================================================
+   📋 DROPDOWN MENU - เมนูแบบดรอปดาวน์
+   ========================================================= */
+
+.dropdown-menu {
+  background-color: hsl(var(--popover));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 
+              0 4px 6px -4px rgb(0 0 0 / 0.1);
+  padding: 0.25rem;
+  min-width: 8rem;
+}
+
+.dropdown-item {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  color: hsl(var(--popover-foreground));
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: calc(var(--radius) - 2px);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+.dropdown-item:active {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+/* =========================================================
+   📌 STATUS INDICATOR - ตัวบอกสถานะ
+   ========================================================= */
+
+.status {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+/* =========================================================
+   ➖ HORIZONTAL RULE - เส้นแบ่ง
+   ========================================================= */
+
+hr {
+  border: 0;
+  border-top: 1px solid hsl(var(--border));
+  opacity: 1;
+  margin: 1.5rem 0;
+}
+
+/* =========================================================
+   🔧 UTILITY CLASSES - คลาสช่วยเหลือ
+   ========================================================= */
+
+.hidden,
+.d-none {
+  display: none !important;
+}
+
+.mb-3 {
+  margin-bottom: 1rem !important;
+}
+
+.me-2 {
+  margin-right: 0.5rem !important;
+}
+
+.ms-2 {
+  margin-left: 0.5rem !important;
+}
+
+.mt-3 {
+  margin-top: 1rem !important;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+.text-end {
+  text-align: right !important;
+}
+
+.text-muted {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.fw-bold {
+  font-weight: 600 !important;
+}
+
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* =========================================================
+   🎯 BOOTSTRAP GRID COMPATIBILITY
+   ========================================================= */
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -0.75rem;
+  margin-left: -0.75rem;
+}
+
+.col-md-3,
+.col-md-6 {
+  position: relative;
+  width: 100%;
+  padding-right: 0.75rem;
+  padding-left: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .col-md-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+  
+  .col-md-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
+
+/* =========================================================
+   ✨ INSTALL BUTTON ANIMATION
+   ========================================================= */
+
+.install {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* =========================================================
+   🎨 CUSTOM INLINE STYLES OVERRIDE
+   ========================================================= */
+
+/* ลบ inline style ของ search bar ถ้าต้องการใช้ theme */
+.row.mb-3[style] {
+  background-color: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
+}
+
+/* =========================================================
+   📱 RESPONSIVE DESIGN - Mobile First
+   ========================================================= */
+
+/* Extra Small Devices (< 576px) - Mobile Portrait */
+@media (max-width: 575.98px) {
+  body {
+    padding: 0.75rem;
+  }
+  
+  .login-card {
+    padding: 1.5rem;
+  }
+  
+  .login-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .app {
+    padding: 1rem;
+  }
+  
+  h1 {
+    font-size: 1.75rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  h3 {
+    font-size: 1.25rem;
+  }
+  
+  .user-bar {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+  
+  .btn-group {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .btn-group .btn {
+    width: 100%;
+    border-radius: var(--radius) !important;
+  }
+  
+  /* Stack OAuth buttons vertically on mobile */
+  .oauth-divider + .d-flex {
+    flex-direction: column !important;
+  }
+  
+  /* Smaller buttons on mobile */
+  .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  /* Make tables scroll horizontally */
+  .table-responsive {
+    margin: 0 -1rem;
+  }
+  
+  #dataTable {
+    font-size: 0.75rem;
+  }
+  
+  #dataTable td,
+  #dataTable th {
+    padding: 0.5rem;
+  }
+}
+
+/* Small Devices (576px - 767px) - Mobile Landscape / Small Tablets */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .login-card {
+    max-width: 480px;
+  }
+  
+  .app {
+    padding: 1.5rem;
+  }
+}
+
+/* Medium Devices (768px - 991px) - Tablets */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  body {
+    padding: 2rem;
+  }
+  
+  .login-card {
+    max-width: 500px;
+  }
+}
+
+/* Large Devices (992px+) - Desktop */
+@media (min-width: 992px) {
+  .login-container {
+    padding: 2rem;
+  }
+}
+
+/* Touch-friendly improvements for tablets and mobile */
+@media (hover: none) and (pointer: coarse) {
+  .btn {
+    min-height: 44px; /* Apple's recommended touch target size */
+    padding: 0.625rem 1.25rem;
+  }
+  
+  .form-control {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  .password-toggle-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .btn,
+  .user-bar,
+  .pagination,
+  .login-container {
+    display: none !important;
+  }
+  
+  #tableContainer {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
