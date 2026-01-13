@@ -640,6 +640,9 @@ async function showApp(user) {
   // Setup data management buttons
   setupDataManagement();
   
+  // Setup hello user button
+  setupHelloUserButton();
+  
   // Load user profile data
   await loadUserProfile();
   
@@ -1439,13 +1442,23 @@ function updateBulkActionsUI() {
     selectAllCheckbox.indeterminate = checkboxes.length > 0 && checkboxes.length < allCheckboxes.length;
   }
   
-  // Update CSV button text
+  // Update CSV and PDF button text
   const csvBtnText = document.getElementById('csvBtnText');
+  const pdfBtnText = document.getElementById('pdfBtnText');
+  
   if (csvBtnText) {
     if (selectedItems.size > 0) {
       csvBtnText.textContent = `CSV (${selectedItems.size} รายการที่เลือก)`;
     } else {
       csvBtnText.textContent = 'CSV';
+    }
+  }
+  
+  if (pdfBtnText) {
+    if (selectedItems.size > 0) {
+      pdfBtnText.textContent = `PDF (${selectedItems.size} รายการที่เลือก)`;
+    } else {
+      pdfBtnText.textContent = 'PDF';
     }
   }
 }
@@ -2541,41 +2554,65 @@ function downloadPDF() {
   doc.save('data.pdf');
 }
 
-document.getElementById('helloBtn').addEventListener('click', async () => {
-  const input = document.getElementById('username');
-  const greeting = document.getElementById('greeting');
-  const name = input.value.trim();
-
-  if (!name) {
-    showToast('กรุณาใส่ชื่อ', 'warning');
-    greeting.textContent = '';
+/****************************
+ * Hello User Button Handler
+ ****************************/
+function setupHelloUserButton() {
+  const helloBtn = document.getElementById('helloBtn');
+  if (!helloBtn) {
+    console.error('❌ Hello button not found');
     return;
   }
+  
+  console.log('✅ Hello button found');
+  helloBtn.addEventListener('click', async () => {
+    const input = document.getElementById('username');
+    const greeting = document.getElementById('greeting');
+    
+    if (!input) {
+      console.error('❌ Username input not found');
+      return;
+    }
+    
+    const name = input.value.trim();
 
-  greeting.textContent = '⏳ Saving...';
-  greeting.className = 'alert alert-info';
-  greeting.classList.remove('d-none');
+    if (!name) {
+      showToast('กรุณาใส่ชื่อ', 'warning');
+      if (greeting) greeting.textContent = '';
+      return;
+    }
 
-  const { error } = await db
-    .from('ID')
-    .insert([{ NAME: name }]);
+    if (greeting) {
+      greeting.textContent = '⏳ Saving...';
+      greeting.className = 'alert alert-info';
+      greeting.classList.remove('d-none');
+    }
 
-  if (error) {
-    console.error(error);
-    showToast('Error: ' + error.message, 'error');
-    greeting.textContent = '';
-    greeting.classList.add('d-none');
-    return;
-  }
+    const { error } = await db
+      .from('ID')
+      .insert([{ NAME: name }]);
 
-  showToast(`Hello ${name}!`, 'success', 3000);
-  greeting.textContent = `✅ Hello ${name}`;
-  greeting.className = 'alert alert-success';
-  input.value = '';
+    if (error) {
+      console.error(error);
+      showToast('Error: ' + error.message, 'error');
+      if (greeting) {
+        greeting.textContent = '';
+        greeting.classList.add('d-none');
+      }
+      return;
+    }
 
-  // โหลดข้อมูลใหม่
-  loadData();
-});
+    showToast(`Hello ${name}!`, 'success', 3000);
+    if (greeting) {
+      greeting.textContent = `✅ Hello ${name}`;
+      greeting.className = 'alert alert-success';
+    }
+    input.value = '';
+
+    // โหลดข้อมูลใหม่
+    loadData();
+  });
+}
 
 
 /****************************
@@ -3061,8 +3098,7 @@ function setupChangePasswordModal() {
       
       if (!strengthFill || !strengthLabel) return;
       
-      const strength = checkPasswordStrength(password);
-      
+      // Reset classes
       strengthFill.className = 'strength-fill';
       strengthLabel.className = 'strength-label';
       
@@ -3071,15 +3107,18 @@ function setupChangePasswordModal() {
         return;
       }
       
-      if (strength === 'weak') {
+      const strengthResult = checkPasswordStrength(password);
+      const score = strengthResult.score;
+      
+      if (score === 0) {
         strengthFill.classList.add('weak');
         strengthLabel.classList.add('weak');
         strengthLabel.textContent = 'อ่อนแอ';
-      } else if (strength === 'medium') {
+      } else if (score === 1) {
         strengthFill.classList.add('medium');
         strengthLabel.classList.add('medium');
         strengthLabel.textContent = 'ปานกลาง';
-      } else if (strength === 'strong') {
+      } else {
         strengthFill.classList.add('strong');
         strengthLabel.classList.add('strong');
         strengthLabel.textContent = 'แข็งแกร่ง';
