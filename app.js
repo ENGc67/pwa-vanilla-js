@@ -14,6 +14,13 @@ let currentFilter = '';
 let currentPage = 1;
 let itemsPerPage = 10;
 
+// Global variables for modal state
+let currentEditingItem = null;
+let currentDeletingItem = null;
+
+// Global variables for bulk actions
+let selectedItems = new Set();
+
 /****************************
  * 🍞 TOAST NOTIFICATION SYSTEM
  ****************************/
@@ -486,7 +493,7 @@ const SUPABASE_ANON_KEY =
 // Check if Supabase is loaded
 if (!window.supabase) {
   console.error('❌ Supabase SDK not loaded! Check if the CDN script is working.');
-  alert('เกิดข้อผิดพลาด: ไม่สามารถโหลด Supabase SDK กรุณา refresh หน้าเว็บ');
+  showToast('เกิดข้อผิดพลาด: ไม่สามารถโหลด Supabase SDK กรุณา refresh หน้าเว็บ', 'error', 0);
 }
 
 // ✅ สำคัญ: ใช้ window.supabase และตั้งชื่อใหม่เป็น db
@@ -1146,7 +1153,7 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
   const { error } = await db.auth.signOut();
   
   if (error) {
-    alert('Error logging out: ' + error.message);
+    showToast('เกิดข้อผิดพลาดในการออกจากระบบ: ' + error.message, 'error');
   } else {
     showLogin();
     // Clear data
@@ -1237,12 +1244,381 @@ async function loadData() {
 }
 
 /****************************
+ * Edit and Delete Functions
+ ****************************/
+
+function enableEditMode(row, item) {
+  // Store the item being edited
+  currentEditingItem = item;
+  
+  // Get modal elements
+  const editModal = document.getElementById('editItemModal');
+  const editItemNameInput = document.getElementById('editItemName');
+  const editCharCounter = document.getElementById('editCharCounter');
+  
+  // Populate modal with current values
+  editItemNameInput.value = item.NAME || '';
+  
+  // Update character counter
+  const length = editItemNameInput.value.length;
+  editCharCounter.textContent = `${length}/100`;
+  editCharCounter.classList.remove('warning', 'danger');
+  if (length > 80) {
+    editCharCounter.classList.add('danger');
+  } else if (length > 50) {
+    editCharCounter.classList.add('warning');
+  }
+  
+  // Show modal
+  editModal.classList.remove('d-none');
+  setTimeout(() => {
+    editModal.classList.add('show');
+    editItemNameInput.focus();
+    editItemNameInput.select();
+  }, 10);
+}
+
+// Close Edit Modal function
+function closeEditItemModal() {
+  const editModal = document.getElementById('editItemModal');
+  const editItemNameInput = document.getElementById('editItemName');
+  const editItemNameError = document.getElementById('editItemNameError');
+  const submitBtn = document.getElementById('submitEditItem');
+  const btnText = submitBtn.querySelector('.btn-text');
+  const spinner = submitBtn.querySelector('.spinner-border');
+  
+  editModal.classList.remove('show');
+  setTimeout(() => {
+    editModal.classList.add('d-none');
+    editItemNameInput.value = '';
+    editItemNameError.textContent = '';
+    editItemNameError.classList.remove('show');
+    currentEditingItem = null;
+    
+    // Reset button state
+    submitBtn.disabled = false;
+    btnText.textContent = 'บันทึกการเปลี่ยนแปลง';
+    spinner.classList.add('d-none');
+  }, 300);
+}
+
+function cancelEdit(row, originalName) {
+  // This function is no longer needed for modal approach
+  // But keeping it for compatibility
+  closeEditItemModal();
+}
+
+async function saveEdit(row, itemId, newName) {
+  if (!newName) {
+    showToast('ชื่อรายการไม่สามารถว่างเปล่าได้', 'warning');
+    return;
+  }
+
+  try {
+    const { error } = await db
+      .from('ID')
+      .update({ NAME: newName })
+      .eq('id', itemId);
+
+    if (error) {
+      console.error('Error updating record:', error);
+      showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
+      return;
+    }
+
+    // Update local data
+    const itemIndex = originalData.findIndex(d => d.id === itemId);
+    if (itemIndex !== -1) {
+      originalData[itemIndex].NAME = newName;
+    }
+
+    // Refresh display
+    displayData();
+
+    showToast('แก้ไขข้อมูลสำเร็จ!', 'success');
+  } catch (error) {
+    console.error('Error:', error);
+    showToast('เกิดข้อผิดพลาดระหว่างการแก้ไข', 'error');
+  }
+}
+
+function deleteRecord(itemId, itemName) {
+  // Store the item being deleted
+  currentDeletingItem = { id: itemId, name: itemName };
+  
+  // Get modal elements
+  const deleteModal = document.getElementById('deleteConfirmModal');
+  const deleteItemNameSpan = document.getElementById('deleteItemName');
+  
+  // Populate modal with item name
+  deleteItemNameSpan.textContent = itemName || 'Unknown';
+  
+  // Show modal
+  deleteModal.classList.remove('d-none');
+  setTimeout(() => {
+    deleteModal.classList.add('show');
+  }, 10);
+}
+
+// Close Delete Confirmation Modal function
+function closeDeleteConfirmModal() {
+  const deleteModal = document.getElementById('deleteConfirmModal');
+  const confirmBtn = document.getElementById('confirmDelete');
+  const btnText = confirmBtn.querySelector('.btn-text');
+  const spinner = confirmBtn.querySelector('.spinner-border');
+  
+  deleteModal.classList.remove('show');
+  setTimeout(() => {
+    deleteModal.classList.add('d-none');
+    currentDeletingItem = null;
+    
+    // Reset button state
+    confirmBtn.disabled = false;
+    btnText.textContent = 'ลบรายการ';
+    spinner.classList.add('d-none');
+  }, 300);
+}
+
+async function performDelete(itemId, itemName) {
+  try {
+    const { error } = await db
+      .from('ID')
+      .delete()
+      .eq('id', itemId);
+
+    if (error) {
+      console.error('Error deleting record:', error);
+      showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
+      return;
+    }
+
+    // Remove from local data
+    originalData = originalData.filter(d => d.id !== itemId);
+
+    // Refresh display
+    displayData();
+
+    showToast(`✅ ลบรายการ "${itemName}" สำเร็จ!`, 'success');
+  } catch (error) {
+    console.error('Error:', error);
+    showToast('เกิดข้อผิดพลาดระหว่างการลบ', 'error');
+  }
+}
+
+/****************************
+ * Bulk Actions Functions
+ ****************************/
+
+function updateBulkActionsUI() {
+  // Get all checked checkboxes
+  const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+  selectedItems.clear();
+  
+  checkboxes.forEach(cb => {
+    selectedItems.add(cb.dataset.itemId);
+  });
+  
+  // Update UI
+  const bulkActionsBar = document.getElementById('bulkActionsBar');
+  const selectedCount = document.getElementById('selectedCount');
+  const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+  
+  if (bulkActionsBar) {
+    if (selectedItems.size > 0) {
+      bulkActionsBar.classList.remove('d-none');
+      if (selectedCount) selectedCount.textContent = selectedItems.size;
+    } else {
+      bulkActionsBar.classList.add('d-none');
+    }
+  }
+  
+  // Update select all checkbox state
+  if (selectAllCheckbox) {
+    const allCheckboxes = document.querySelectorAll('.row-checkbox');
+    selectAllCheckbox.checked = allCheckboxes.length > 0 && checkboxes.length === allCheckboxes.length;
+    selectAllCheckbox.indeterminate = checkboxes.length > 0 && checkboxes.length < allCheckboxes.length;
+  }
+  
+  // Update CSV button text
+  const csvBtnText = document.getElementById('csvBtnText');
+  if (csvBtnText) {
+    if (selectedItems.size > 0) {
+      csvBtnText.textContent = `CSV (${selectedItems.size} รายการที่เลือก)`;
+    } else {
+      csvBtnText.textContent = 'CSV';
+    }
+  }
+}
+
+function selectAll() {
+  const checkboxes = document.querySelectorAll('.row-checkbox');
+  const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+  
+  checkboxes.forEach(cb => {
+    cb.checked = selectAllCheckbox.checked;
+  });
+  
+  updateBulkActionsUI();
+}
+
+function deselectAll() {
+  const checkboxes = document.querySelectorAll('.row-checkbox');
+  const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+  
+  checkboxes.forEach(cb => {
+    cb.checked = false;
+  });
+  
+  if (selectAllCheckbox) {
+    selectAllCheckbox.checked = false;
+    selectAllCheckbox.indeterminate = false;
+  }
+  
+  selectedItems.clear();
+  updateBulkActionsUI();
+}
+
+function bulkDelete() {
+  if (selectedItems.size === 0) {
+    showToast('กรุณาเลือกรายการที่ต้องการลบ', 'warning');
+    return;
+  }
+  
+  // Get selected items names
+  const selectedNames = Array.from(selectedItems).map(id => {
+    const item = originalData.find(d => d.id === id);
+    return item ? item.NAME || 'Unknown' : 'Unknown';
+  });
+  
+  // Show bulk delete confirmation modal
+  const bulkDeleteModal = document.getElementById('bulkDeleteModal');
+  const bulkDeleteCount = document.getElementById('bulkDeleteCount');
+  const bulkDeleteList = document.getElementById('bulkDeleteList');
+  
+  if (bulkDeleteCount) bulkDeleteCount.textContent = selectedItems.size;
+  if (bulkDeleteList) {
+    bulkDeleteList.innerHTML = selectedNames
+      .slice(0, 5)
+      .map(name => `<li>${name}</li>`)
+      .join('');
+    
+    if (selectedNames.length > 5) {
+      bulkDeleteList.innerHTML += `<li class="text-muted">และอีก ${selectedNames.length - 5} รายการ...</li>`;
+    }
+  }
+  
+  // Show modal
+  bulkDeleteModal.classList.remove('d-none');
+  setTimeout(() => {
+    bulkDeleteModal.classList.add('show');
+  }, 10);
+}
+
+async function confirmBulkDelete() {
+  if (selectedItems.size === 0) return;
+  
+  const confirmBtn = document.getElementById('confirmBulkDelete');
+  const btnText = confirmBtn.querySelector('.btn-text');
+  const spinner = confirmBtn.querySelector('.spinner-border');
+  
+  // Show loading
+  if (btnText) btnText.classList.add('d-none');
+  if (spinner) spinner.classList.remove('d-none');
+  confirmBtn.disabled = true;
+  
+  try {
+    // Delete all selected items
+    const deletePromises = Array.from(selectedItems).map(id =>
+      db.from('ID').delete().eq('id', id)
+    );
+    
+    const results = await Promise.all(deletePromises);
+    
+    // Check for errors
+    const errors = results.filter(r => r.error);
+    if (errors.length > 0) {
+      console.error('Some deletions failed:', errors);
+      showToast(`ลบสำเร็จ ${selectedItems.size - errors.length}/${selectedItems.size} รายการ`, 'warning');
+    } else {
+      showToast(`✅ ลบ ${selectedItems.size} รายการสำเร็จ!`, 'success');
+    }
+    
+    // Remove deleted items from local data
+    originalData = originalData.filter(d => !selectedItems.has(d.id));
+    
+    // Clear selection
+    selectedItems.clear();
+    
+    // Clear all checkboxes
+    const checkboxes = document.querySelectorAll('.row-checkbox');
+    checkboxes.forEach(cb => cb.checked = false);
+    
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    if (selectAllCheckbox) {
+      selectAllCheckbox.checked = false;
+      selectAllCheckbox.indeterminate = false;
+    }
+    
+    // Hide bulk actions bar
+    const bulkActionsBar = document.getElementById('bulkActionsBar');
+    if (bulkActionsBar) {
+      bulkActionsBar.classList.add('d-none');
+    }
+    
+    // Close modal and refresh
+    closeBulkDeleteModal();
+    displayData();
+    
+  } catch (error) {
+    console.error('Error during bulk delete:', error);
+    showToast('เกิดข้อผิดพลาดระหว่างการลบ', 'error');
+  } finally {
+    // Hide loading
+    if (btnText) btnText.classList.remove('d-none');
+    if (spinner) spinner.classList.add('d-none');
+    confirmBtn.disabled = false;
+  }
+}
+
+function closeBulkDeleteModal() {
+  const bulkDeleteModal = document.getElementById('bulkDeleteModal');
+  bulkDeleteModal.classList.remove('show');
+  setTimeout(() => {
+    bulkDeleteModal.classList.add('d-none');
+  }, 300);
+}
+
+/****************************
  * Data Display and Manipulation
  ****************************/
+
+// Helper function to highlight search terms
+function highlightSearchTerm(text, searchTerm) {
+  if (!searchTerm || !text) return text;
+  
+  const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  return text.replace(regex, '<mark>$1</mark>');
+}
 
 function displayData() {
   const dataTableBody = document.getElementById('dataTableBody');
   const resultCount = document.getElementById('resultCount');
+  const emptyState = document.getElementById('emptyState');
+  const tableContainer = document.getElementById('tableContainer');
+  const paginationContainer = document.getElementById('paginationContainer');
+
+  // Check if originalData is completely empty (no data at all)
+  if (originalData.length === 0) {
+    // Show empty state, hide table and pagination
+    emptyState.classList.remove('d-none');
+    tableContainer.classList.add('d-none');
+    paginationContainer.classList.add('d-none');
+    return;
+  } else {
+    // Hide empty state, show table
+    emptyState.classList.add('d-none');
+    tableContainer.classList.remove('d-none');
+  }
 
   // Filter data
   let filteredData = originalData.filter(item => {
@@ -1326,6 +1702,17 @@ function displayData() {
       const row = document.createElement('tr');
       row.dataset.id = item.id; // Store the record ID for edit/delete operations
 
+      // Checkbox column
+      const checkboxCell = document.createElement('td');
+      checkboxCell.className = 'text-center';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'row-checkbox';
+      checkbox.dataset.itemId = item.id;
+      checkbox.onchange = () => updateBulkActionsUI();
+      checkboxCell.appendChild(checkbox);
+      row.appendChild(checkboxCell);
+
       // Expand/collapse button column
       const expandCell = document.createElement('td');
       expandCell.className = 'text-center';
@@ -1343,13 +1730,25 @@ function displayData() {
       row.appendChild(indexCell);
 
       const nameCell = document.createElement('td');
-      nameCell.textContent = item.NAME || 'N/A';
+      const nameValue = item.NAME || 'N/A';
+      // Highlight search term in name
+      if (currentFilter && nameValue !== 'N/A') {
+        nameCell.innerHTML = highlightSearchTerm(nameValue, currentFilter);
+      } else {
+        nameCell.textContent = nameValue;
+      }
       nameCell.dataset.field = 'name';
       row.appendChild(nameCell);
 
       const dateCell = document.createElement('td');
       const createdDate = new Date(item.created_at);
-      dateCell.textContent = createdDate.toLocaleString();
+      const dateString = createdDate.toLocaleString();
+      // Highlight search term in date
+      if (currentFilter) {
+        dateCell.innerHTML = highlightSearchTerm(dateString, currentFilter);
+      } else {
+        dateCell.textContent = dateString;
+      }
       row.appendChild(dateCell);
 
       // Actions column
@@ -1417,154 +1816,6 @@ function clearSearch() {
 }
 
 /****************************
- * Edit and Delete Functions
- ****************************/
-
-function enableEditMode(row, item) {
-  const nameCell = row.querySelector('[data-field="name"]');
-  const actionsCell = row.querySelector('td:last-child');
-
-  // Store original content
-  const originalName = nameCell.textContent;
-
-  // Create input field
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.className = 'form-control form-control-sm';
-  input.value = originalName === 'N/A' ? '' : originalName;
-
-  // Replace text with input
-  nameCell.textContent = '';
-  nameCell.appendChild(input);
-  input.focus();
-  input.select();
-
-  // Replace buttons with Save/Cancel
-  actionsCell.innerHTML = '';
-
-  // Save button
-  const saveBtn = document.createElement('button');
-  saveBtn.className = 'btn btn-sm btn-success me-1';
-  saveBtn.innerHTML = '💾 Save';
-  saveBtn.onclick = () => saveEdit(row, item.id, input.value.trim());
-  actionsCell.appendChild(saveBtn);
-
-  // Cancel button
-  const cancelBtn = document.createElement('button');
-  cancelBtn.className = 'btn btn-sm btn-secondary';
-  cancelBtn.innerHTML = '❌ Cancel';
-  cancelBtn.onclick = () => cancelEdit(row, originalName);
-  actionsCell.appendChild(cancelBtn);
-
-  // Handle Enter/Escape keys
-  input.onkeydown = (e) => {
-    if (e.key === 'Enter') {
-      saveEdit(row, item.id, input.value.trim());
-    } else if (e.key === 'Escape') {
-      cancelEdit(row, originalName);
-    }
-  };
-}
-
-function cancelEdit(row, originalName) {
-  const nameCell = row.querySelector('[data-field="name"]');
-  const actionsCell = row.querySelector('td:last-child');
-
-  // Restore original content
-  nameCell.textContent = originalName;
-
-  // Restore original buttons
-  actionsCell.innerHTML = '';
-  const editBtn = document.createElement('button');
-  editBtn.className = 'btn btn-sm btn-warning me-1';
-  editBtn.innerHTML = '✏️ Edit';
-  editBtn.onclick = () => {
-    const itemId = row.dataset.id;
-    const item = originalData.find(d => d.id === itemId);
-    if (item) enableEditMode(row, item);
-  };
-  actionsCell.appendChild(editBtn);
-
-  const deleteBtn = document.createElement('button');
-  deleteBtn.className = 'btn btn-sm btn-danger';
-  deleteBtn.innerHTML = '🗑️ Delete';
-  deleteBtn.onclick = () => {
-    const itemId = row.dataset.id;
-    const item = originalData.find(d => d.id === itemId);
-    if (item) deleteRecord(item.id, item.NAME || 'Unknown');
-  };
-  actionsCell.appendChild(deleteBtn);
-}
-
-async function saveEdit(row, itemId, newName) {
-  if (!newName) {
-    showToast('Name cannot be empty!', 'warning');
-    return;
-  }
-
-  try {
-    const { error } = await db
-      .from('ID')
-      .update({ NAME: newName })
-      .eq('id', itemId);
-
-    if (error) {
-      console.error('Error updating record:', error);
-      showToast('Error updating: ' + error.message, 'error');
-      return;
-    }
-
-    // Update local data
-    const itemIndex = originalData.findIndex(d => d.id === itemId);
-    if (itemIndex !== -1) {
-      originalData[itemIndex].NAME = newName;
-    }
-
-    // Refresh display
-    displayData();
-
-    showToast('Record updated successfully!', 'success');
-  } catch (error) {
-    console.error('Error:', error);
-    showToast('An error occurred while updating', 'error');
-  }
-}
-
-function deleteRecord(itemId, itemName) {
-  const confirmed = confirm(`Are you sure you want to delete the record for "${itemName}"?\n\nThis action cannot be undone!`);
-
-  if (!confirmed) return;
-
-  performDelete(itemId, itemName);
-}
-
-async function performDelete(itemId, itemName) {
-  try {
-    const { error } = await db
-      .from('ID')
-      .delete()
-      .eq('id', itemId);
-
-    if (error) {
-      console.error('Error deleting record:', error);
-      showToast('Error deleting: ' + error.message, 'error');
-      return;
-    }
-
-    // Remove from local data
-    originalData = originalData.filter(d => d.id !== itemId);
-
-    // Refresh display
-    displayData();
-
-    showToast(`Record "${itemName}" deleted successfully!`, 'success');
-  } catch (error) {
-    console.error('Error:', error);
-    showToast('An error occurred while deleting', 'error');
-  }
-}
-
-/****************************
  * 📊 DATA MANAGEMENT SETUP
  ****************************/
 
@@ -1627,6 +1878,21 @@ function setupDataManagement() {
     console.error('❌ Add Item button not found');
   }
 
+  // Empty state add button
+  const emptyStateAddBtn = document.getElementById('emptyStateAddBtn');
+  if (emptyStateAddBtn) {
+    emptyStateAddBtn.addEventListener('click', () => {
+      console.log('➕ Empty state add button clicked');
+      if (addItemModal) {
+        addItemModal.classList.remove('d-none');
+        setTimeout(() => {
+          addItemModal.classList.add('show');
+          if (itemNameInput) itemNameInput.focus();
+        }, 10);
+      }
+    });
+  }
+
   // Close modal function
   function closeAddItemModalFunc() {
     if (addItemModal) {
@@ -1677,6 +1943,25 @@ function setupDataManagement() {
         return;
       }
 
+      // Check for duplicate names (case-insensitive)
+      const duplicateExists = originalData.some(item => 
+        item.NAME && item.NAME.toLowerCase() === name.toLowerCase()
+      );
+      
+      if (duplicateExists) {
+        itemNameInput.classList.add('is-invalid');
+        document.getElementById('itemNameError').textContent = 'ชื่อนี้มีอยู่แล้ว กรุณาใช้ชื่ออื่น';
+        showToast('⚠️ ชื่อรายการนี้มีอยู่แล้ว', 'warning');
+        return;
+      }
+
+      // Check for only whitespace or special characters
+      if (!/[a-zA-Z0-9ก-๙]/.test(name)) {
+        itemNameInput.classList.add('is-invalid');
+        document.getElementById('itemNameError').textContent = 'กรุณากรอกชื่อที่มีตัวอักษรหรือตัวเลข';
+        return;
+      }
+
       // Show loading
       const btnText = submitAddItem.querySelector('.btn-text');
       const spinner = submitAddItem.querySelector('.spinner-border');
@@ -1716,12 +2001,282 @@ function setupDataManagement() {
     });
   }
   
+  /****************************
+   * Edit Item Modal
+   ****************************/
+  const editItemModal = document.getElementById('editItemModal');
+  const editItemNameInput = document.getElementById('editItemName');
+  const editCharCounter = document.getElementById('editCharCounter');
+  const editItemForm = document.getElementById('editItemForm');
+  const closeEditItemModal_btn = document.getElementById('closeEditItemModal');
+  const cancelEditItem = document.getElementById('cancelEditItem');
+  const submitEditItem = document.getElementById('submitEditItem');
+
+  // Character counter for Edit Item Modal
+  if (editItemNameInput && editCharCounter) {
+    editItemNameInput.addEventListener('input', () => {
+      const length = editItemNameInput.value.length;
+      editCharCounter.textContent = `${length}/100`;
+      
+      // Update color based on length
+      editCharCounter.classList.remove('warning', 'danger');
+      if (length > 80) {
+        editCharCounter.classList.add('danger');
+      } else if (length > 50) {
+        editCharCounter.classList.add('warning');
+      }
+    });
+  }
+
+  // Close Edit Modal handlers
+  if (closeEditItemModal_btn) {
+    closeEditItemModal_btn.addEventListener('click', closeEditItemModal);
+  }
+
+  if (cancelEditItem) {
+    cancelEditItem.addEventListener('click', closeEditItemModal);
+  }
+
+  // Click outside to close
+  if (editItemModal) {
+    editItemModal.addEventListener('click', (e) => {
+      if (e.target === editItemModal) {
+        closeEditItemModal();
+      }
+    });
+  }
+
+  // ESC key to close
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && editItemModal && !editItemModal.classList.contains('d-none')) {
+      closeEditItemModal();
+    }
+  });
+
+  // Form submission
+  if (editItemForm) {
+    editItemForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const newName = editItemNameInput.value.trim();
+      const editItemNameError = document.getElementById('editItemNameError');
+      
+      // Validation
+      if (!newName) {
+        editItemNameInput.classList.add('is-invalid');
+        editItemNameError.textContent = 'กรุณากรอกชื่อรายการ';
+        editItemNameError.classList.add('show');
+        return;
+      }
+
+      // Check for duplicate names (excluding current item)
+      const duplicateExists = originalData.some(item => 
+        item.id !== currentEditingItem.id && 
+        item.NAME && 
+        item.NAME.toLowerCase() === newName.toLowerCase()
+      );
+      
+      if (duplicateExists) {
+        editItemNameInput.classList.add('is-invalid');
+        editItemNameError.textContent = 'ชื่อนี้มีอยู่แล้ว กรุณาใช้ชื่ออื่น';
+        editItemNameError.classList.add('show');
+        showToast('⚠️ ชื่อรายการนี้มีอยู่แล้ว', 'warning');
+        return;
+      }
+
+      // Check for only whitespace or special characters
+      if (!/[a-zA-Z0-9ก-๙]/.test(newName)) {
+        editItemNameInput.classList.add('is-invalid');
+        editItemNameError.textContent = 'กรุณากรอกชื่อที่มีตัวอักษรหรือตัวเลข';
+        editItemNameError.classList.add('show');
+        return;
+      }
+
+      if (!currentEditingItem) {
+        showToast('ไม่พบรายการที่จะแก้ไข', 'error');
+        return;
+      }
+
+      // Show loading state
+      const btnText = submitEditItem.querySelector('.btn-text');
+      const spinner = submitEditItem.querySelector('.spinner-border');
+      if (btnText) btnText.classList.add('d-none');
+      if (spinner) spinner.classList.remove('d-none');
+      submitEditItem.disabled = true;
+
+      try {
+        const { error } = await db
+          .from('ID')
+          .update({ NAME: newName })
+          .eq('id', currentEditingItem.id);
+
+        if (error) {
+          console.error('Error updating item:', error);
+          showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
+        } else {
+          // Update local data
+          const itemIndex = originalData.findIndex(d => d.id === currentEditingItem.id);
+          if (itemIndex !== -1) {
+            originalData[itemIndex].NAME = newName;
+          }
+          
+          showToast('✅ แก้ไขรายการสำเร็จ!', 'success', 2000);
+          closeEditItemModal();
+          displayData(); // Refresh display
+        }
+      } catch (err) {
+        console.error('Error:', err);
+        showToast('เกิดข้อผิดพลาดในการแก้ไขรายการ', 'error');
+      } finally {
+        // Hide loading
+        if (btnText) btnText.classList.remove('d-none');
+        if (spinner) spinner.classList.add('d-none');
+        submitEditItem.disabled = false;
+      }
+    });
+  }
+
+  // Remove validation error on input (Edit Modal)
+  if (editItemNameInput) {
+    editItemNameInput.addEventListener('input', () => {
+      editItemNameInput.classList.remove('is-invalid');
+    });
+  }
+  
+  /****************************
+   * Delete Confirmation Modal
+   ****************************/
+  const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+  const closeDeleteConfirmModal_btn = document.getElementById('closeDeleteConfirmModal');
+  const cancelDeleteBtn = document.getElementById('cancelDelete');
+  const confirmDeleteBtn = document.getElementById('confirmDelete');
+
+  // Close Delete Modal handlers
+  if (closeDeleteConfirmModal_btn) {
+    closeDeleteConfirmModal_btn.addEventListener('click', closeDeleteConfirmModal);
+  }
+
+  if (cancelDeleteBtn) {
+    cancelDeleteBtn.addEventListener('click', closeDeleteConfirmModal);
+  }
+
+  // Click outside to close
+  if (deleteConfirmModal) {
+    deleteConfirmModal.addEventListener('click', (e) => {
+      if (e.target === deleteConfirmModal) {
+        closeDeleteConfirmModal();
+      }
+    });
+  }
+
+  // ESC key to close (already handled globally, but let's ensure it works)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && deleteConfirmModal && !deleteConfirmModal.classList.contains('d-none')) {
+      closeDeleteConfirmModal();
+    }
+  });
+
+  // Confirm delete action
+  if (confirmDeleteBtn) {
+    confirmDeleteBtn.addEventListener('click', async () => {
+      if (!currentDeletingItem) {
+        showToast('ไม่พบรายการที่จะลบ', 'error');
+        return;
+      }
+
+      // Show loading state
+      const btnText = confirmDeleteBtn.querySelector('.btn-text');
+      const spinner = confirmDeleteBtn.querySelector('.spinner-border');
+      if (btnText) btnText.classList.add('d-none');
+      if (spinner) spinner.classList.remove('d-none');
+      confirmDeleteBtn.disabled = true;
+
+      try {
+        await performDelete(currentDeletingItem.id, currentDeletingItem.name);
+        closeDeleteConfirmModal();
+      } catch (error) {
+        console.error('Error during delete:', error);
+        showToast('เกิดข้อผิดพลาดระหว่างการลบ', 'error');
+      } finally {
+        // Hide loading
+        if (btnText) btnText.classList.remove('d-none');
+        if (spinner) spinner.classList.add('d-none');
+        confirmDeleteBtn.disabled = false;
+      }
+    });
+  }
+  
+  /****************************
+   * Bulk Actions Event Listeners
+   ****************************/
+  const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+  const deselectAllBtn = document.getElementById('deselectAllBtn');
+  const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+  const bulkDeleteModal = document.getElementById('bulkDeleteModal');
+  const closeBulkDeleteModal_btn = document.getElementById('closeBulkDeleteModal');
+  const cancelBulkDeleteBtn = document.getElementById('cancelBulkDelete');
+  const confirmBulkDeleteBtn = document.getElementById('confirmBulkDelete');
+
+  // Select All checkbox
+  if (selectAllCheckbox) {
+    selectAllCheckbox.addEventListener('change', selectAll);
+  }
+
+  // Deselect All button
+  if (deselectAllBtn) {
+    deselectAllBtn.addEventListener('click', deselectAll);
+  }
+
+  // Bulk Delete button
+  if (bulkDeleteBtn) {
+    bulkDeleteBtn.addEventListener('click', bulkDelete);
+  }
+
+  // Close Bulk Delete Modal handlers
+  if (closeBulkDeleteModal_btn) {
+    closeBulkDeleteModal_btn.addEventListener('click', closeBulkDeleteModal);
+  }
+
+  if (cancelBulkDeleteBtn) {
+    cancelBulkDeleteBtn.addEventListener('click', closeBulkDeleteModal);
+  }
+
+  // Confirm Bulk Delete
+  if (confirmBulkDeleteBtn) {
+    confirmBulkDeleteBtn.addEventListener('click', confirmBulkDelete);
+  }
+
+  // Click outside to close bulk delete modal
+  if (bulkDeleteModal) {
+    bulkDeleteModal.addEventListener('click', (e) => {
+      if (e.target === bulkDeleteModal) {
+        closeBulkDeleteModal();
+      }
+    });
+  }
+
+  // ESC key to close bulk delete modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && bulkDeleteModal && !bulkDeleteModal.classList.contains('d-none')) {
+      closeBulkDeleteModal();
+    }
+  });
+  
   // Download CSV Button
   const downloadCsvBtn = document.getElementById('downloadCsvBtn');
   if (downloadCsvBtn) {
     downloadCsvBtn.addEventListener('click', (e) => {
       e.preventDefault();
       downloadCSV();
+    });
+  }
+  
+  // Download PDF Button
+  const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+  if (downloadPdfBtn) {
+    downloadPdfBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      downloadPDF();
     });
   }
   
@@ -1800,28 +2355,36 @@ if (searchInput) {
 
 function downloadCSV() {
   if (originalData.length === 0) {
-    alert('No data to download!');
+    showToast('ไม่มีข้อมูลให้ดาวน์โหลด', 'warning');
     return;
   }
 
-  // Get filtered data (same logic as displayData)
-  let filteredData = originalData.filter(item => {
-    if (!currentFilter) return true;
+  let filteredData;
+  
+  // If items are selected, export only selected items
+  if (selectedItems.size > 0) {
+    filteredData = originalData.filter(item => selectedItems.has(item.id));
+    showToast(`กำลังดาวน์โหลด ${filteredData.length} รายการที่เลือก`, 'info', 2000);
+  } else {
+    // Get filtered data (same logic as displayData)
+    filteredData = originalData.filter(item => {
+      if (!currentFilter) return true;
 
-    const searchTerm = currentFilter.toLowerCase();
+      const searchTerm = currentFilter.toLowerCase();
 
-    const searchableFields = [
-      item.NAME || '',
-      new Date(item.created_at).toLocaleString(),
-      new Date(item.created_at).toLocaleDateString(),
-      new Date(item.created_at).toLocaleTimeString(),
-      item.created_at,
-    ];
+      const searchableFields = [
+        item.NAME || '',
+        new Date(item.created_at).toLocaleString(),
+        new Date(item.created_at).toLocaleDateString(),
+        new Date(item.created_at).toLocaleTimeString(),
+        item.created_at,
+      ];
 
-    return searchableFields.some(field =>
-      field.toString().toLowerCase().includes(searchTerm)
-    );
-  });
+      return searchableFields.some(field =>
+        field.toString().toLowerCase().includes(searchTerm)
+      );
+    });
+  }
 
   // Sort data (same as displayData)
   filteredData.sort((a, b) => {
@@ -1871,28 +2434,36 @@ function downloadCSV() {
 
 function downloadPDF() {
   if (originalData.length === 0) {
-    showWarningToast('No data to download!');
+    showToast('ไม่มีข้อมูลให้ดาวน์โหลด', 'warning');
     return;
   }
 
-  // Get filtered data (same logic as displayData)
-  let filteredData = originalData.filter(item => {
-    if (!currentFilter) return true;
+  let filteredData;
+  
+  // If items are selected, export only selected items
+  if (selectedItems.size > 0) {
+    filteredData = originalData.filter(item => selectedItems.has(item.id));
+    showToast(`กำลังดาวน์โหลด ${filteredData.length} รายการที่เลือก`, 'info', 2000);
+  } else {
+    // Get filtered data (same logic as displayData)
+    filteredData = originalData.filter(item => {
+      if (!currentFilter) return true;
 
-    const searchTerm = currentFilter.toLowerCase();
+      const searchTerm = currentFilter.toLowerCase();
 
-    const searchableFields = [
-      item.NAME || '',
-      new Date(item.created_at).toLocaleString(),
-      new Date(item.created_at).toLocaleDateString(),
-      new Date(item.created_at).toLocaleTimeString(),
-      item.created_at,
-    ];
+      const searchableFields = [
+        item.NAME || '',
+        new Date(item.created_at).toLocaleString(),
+        new Date(item.created_at).toLocaleDateString(),
+        new Date(item.created_at).toLocaleTimeString(),
+        item.created_at,
+      ];
 
-    return searchableFields.some(field =>
-      field.toString().toLowerCase().includes(searchTerm)
-    );
-  });
+      return searchableFields.some(field =>
+        field.toString().toLowerCase().includes(searchTerm)
+      );
+    });
+  }
 
   // Sort data (same as displayData)
   filteredData.sort((a, b) => {
@@ -2883,6 +3454,62 @@ const defaultSortHeader = document.querySelector('[data-column="created_at"]');
 if (defaultSortHeader) {
   defaultSortHeader.classList.add('sort-desc');
 }
+
+/****************************
+ * Global Keyboard Shortcuts
+ ****************************/
+document.addEventListener('keydown', (e) => {
+  // Ctrl+N: Open Add Item Modal
+  if (e.ctrlKey && e.key === 'n') {
+    e.preventDefault();
+    const addItemBtn = document.getElementById('addItemBtn');
+    if (addItemBtn && !document.querySelector('.modal-overlay.show')) {
+      addItemBtn.click();
+    }
+  }
+  
+  // Delete key: Delete selected items
+  if (e.key === 'Delete' && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+    // Check if not focused on input fields
+    const activeElement = document.activeElement;
+    if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+      return; // Don't trigger if typing in a field
+    }
+    
+    // Check if any items are selected
+    if (selectedItems.size > 0) {
+      e.preventDefault();
+      const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+      if (bulkDeleteBtn) {
+        bulkDeleteBtn.click();
+      }
+    }
+  }
+  
+  // Ctrl+A: Select all items on current page
+  if (e.ctrlKey && e.key === 'a') {
+    // Check if not focused on input fields
+    const activeElement = document.activeElement;
+    if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+      return; // Allow default behavior in input fields
+    }
+    
+    // If table is visible, select all
+    const tableContainer = document.getElementById('tableContainer');
+    if (tableContainer && !tableContainer.classList.contains('d-none')) {
+      e.preventDefault();
+      selectAll();
+    }
+  }
+  
+  // ESC: Deselect all (if any selected and no modal open)
+  if (e.key === 'Escape') {
+    const hasOpenModal = document.querySelector('.modal-overlay.show');
+    if (!hasOpenModal && selectedItems.size > 0) {
+      deselectAll();
+    }
+  }
+});
 
 }); // สิ้นสุด DOMContentLoaded
 

@@ -2262,6 +2262,533 @@ hr {
 }
 
 /* =========================================================
+   ✏️ EDIT ITEM MODAL
+   ========================================================= */
+
+.edit-item-modal {
+  max-width: 500px;
+  width: 90%;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.edit-item-modal .modal-header {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: var(--radius) var(--radius) 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+.edit-item-modal .modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.edit-item-modal .modal-header .modal-close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1.25rem;
+  padding: 0;
+}
+
+.edit-item-modal .modal-header .modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.edit-item-modal .modal-body {
+  padding: 1.5rem;
+}
+
+.edit-item-modal .input-wrapper {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.edit-item-modal .input-wrapper label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+}
+
+.edit-item-modal .input-wrapper .form-control {
+  padding-right: 4.5rem;
+  border: 2px solid hsl(var(--border));
+  transition: all 0.2s;
+}
+
+.edit-item-modal .input-wrapper .form-control:focus {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+  outline: none;
+}
+
+.edit-item-modal .char-counter {
+  position: absolute;
+  right: 1rem;
+  top: 2.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  pointer-events: none;
+  transition: color 0.2s;
+}
+
+.edit-item-modal .char-counter.warning {
+  color: #f59e0b;
+}
+
+.edit-item-modal .char-counter.danger {
+  color: #ef4444;
+}
+
+.edit-item-modal .modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.edit-item-modal .modal-actions .btn {
+  min-width: 100px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.edit-item-modal .modal-actions .btn-secondary {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+}
+
+.edit-item-modal .modal-actions .btn-secondary:hover {
+  background: hsl(var(--accent));
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.edit-item-modal .modal-actions .btn-primary {
+  background: #0d6efd;
+  border: none;
+  color: white;
+}
+
+.edit-item-modal .modal-actions .btn-primary:hover:not(:disabled) {
+  background: #0b5ed7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+}
+
+.edit-item-modal .modal-actions .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.edit-item-modal .btn-primary .spinner-border {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+  margin-right: 0.5rem;
+}
+
+/* =========================================================
+   �️ DELETE CONFIRMATION MODAL
+   ========================================================= */
+
+.delete-confirm-modal {
+  max-width: 480px;
+  width: 90%;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.delete-confirm-modal .modal-header {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: var(--radius) var(--radius) 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+.delete-confirm-modal .modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.delete-confirm-modal .modal-header .modal-close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1.25rem;
+  padding: 0;
+}
+
+.delete-confirm-modal .modal-header .modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.delete-confirm-modal .modal-body {
+  padding: 2rem 1.5rem 1.5rem;
+  text-align: center;
+}
+
+.delete-confirm-modal .warning-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  animation: warningPulse 2s ease-in-out infinite;
+}
+
+.delete-confirm-modal .warning-icon svg {
+  color: #ef4444;
+  filter: drop-shadow(0 2px 8px rgba(239, 68, 68, 0.3));
+}
+
+@keyframes warningPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+.delete-confirm-modal .delete-message {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  margin-bottom: 1rem;
+}
+
+.delete-confirm-modal .delete-item-info {
+  background: hsl(var(--accent));
+  border: 2px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  word-break: break-word;
+}
+
+.delete-confirm-modal .delete-item-info strong {
+  color: hsl(var(--foreground));
+  font-size: 1rem;
+}
+
+.delete-confirm-modal .text-danger {
+  background: #fee2e2;
+  border-left: 4px solid #ef4444;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  text-align: left;
+  margin-bottom: 1.5rem;
+}
+
+.delete-confirm-modal .modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  padding-top: 1rem;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.delete-confirm-modal .modal-actions .btn {
+  min-width: 120px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.delete-confirm-modal .modal-actions .btn-secondary {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+}
+
+.delete-confirm-modal .modal-actions .btn-secondary:hover {
+  background: hsl(var(--accent));
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.delete-confirm-modal .modal-actions .btn-danger {
+  background: #ef4444;
+  border: none;
+  color: white;
+}
+
+.delete-confirm-modal .modal-actions .btn-danger:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4);
+}
+
+.delete-confirm-modal .modal-actions .btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delete-confirm-modal .btn-danger .spinner-border {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+  margin-right: 0.5rem;
+}
+
+/* =========================================================
+   📦 BULK ACTIONS
+   ========================================================= */
+
+.bulk-actions-bar {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bulk-actions-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.bulk-actions-text {
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bulk-actions-text strong {
+  font-size: 1.25rem;
+  color: #fbbf24;
+}
+
+.bulk-actions-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.bulk-actions-buttons .btn {
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bulk-actions-buttons .btn-outline-secondary {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: white;
+}
+
+.bulk-actions-buttons .btn-outline-secondary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: translateY(-1px);
+}
+
+.bulk-actions-buttons .btn-danger {
+  background: #dc2626;
+  border: none;
+}
+
+.bulk-actions-buttons .btn-danger:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.4);
+}
+
+/* Checkbox styling */
+#selectAllCheckbox,
+.row-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
+#selectAllCheckbox:indeterminate {
+  accent-color: #f59e0b;
+}
+
+/* Table row hover with checkbox */
+#dataTable tbody tr:has(.row-checkbox:checked) {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-left: 3px solid #3b82f6;
+}
+
+/* =========================================================
+   🗑️ BULK DELETE MODAL
+   ========================================================= */
+
+.bulk-delete-modal {
+  max-width: 520px;
+  width: 90%;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.bulk-delete-modal .modal-header {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: var(--radius) var(--radius) 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+.bulk-delete-modal .modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.bulk-delete-modal .modal-header .modal-close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.bulk-delete-modal .modal-header .modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.bulk-delete-modal .modal-body {
+  padding: 2rem 1.5rem 1.5rem;
+  text-align: center;
+}
+
+.bulk-delete-modal .delete-message {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
+.bulk-delete-list-container {
+  background: hsl(var(--accent));
+  border: 2px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.bulk-delete-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.bulk-delete-list li {
+  padding: 0.5rem;
+  border-bottom: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+
+.bulk-delete-list li:last-child {
+  border-bottom: none;
+}
+
+.bulk-delete-list li.text-muted {
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+}
+
+.bulk-delete-modal .text-danger {
+  background: #fee2e2;
+  border-left: 4px solid #dc2626;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  text-align: left;
+  margin-bottom: 1.5rem;
+}
+
+.bulk-delete-modal .modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  padding-top: 1rem;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.bulk-delete-modal .modal-actions .btn {
+  min-width: 120px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.bulk-delete-modal .btn-danger .spinner-border {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+  margin-right: 0.5rem;
+}
+
+/* =========================================================
    �💀 LOADING SKELETONS
    ========================================================= */
 
@@ -2438,6 +2965,137 @@ hr {
     padding: 0.5rem;
   }
 }
+
+/****************************
+ * Empty State CSS
+ ****************************/
+.empty-state-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  padding: 3rem 1rem;
+}
+
+.empty-state-content {
+  text-align: center;
+  max-width: 500px;
+  animation: emptyStateFadeIn 0.5s ease;
+}
+
+@keyframes emptyStateFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.empty-state-icon {
+  font-size: 120px;
+  margin-bottom: 1.5rem;
+  animation: emptyStateIconBounce 2s ease-in-out infinite;
+}
+
+@keyframes emptyStateIconBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.empty-state-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.75rem;
+}
+
+.empty-state-description {
+  font-size: 1rem;
+  color: #6c757d;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.btn-empty-state {
+  display: inline-block;
+  padding: 14px 32px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  text-decoration: none;
+}
+
+.btn-empty-state:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.btn-empty-state:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
+}
+
+/* Empty State Responsive */
+@media (max-width: 576px) {
+  .empty-state-container {
+    min-height: 300px;
+    padding: 2rem 1rem;
+  }
+
+  .empty-state-icon {
+    font-size: 80px;
+  }
+
+  .empty-state-title {
+    font-size: 1.5rem;
+  }
+
+  .empty-state-description {
+    font-size: 0.95rem;
+  }
+
+  .btn-empty-state {
+    padding: 12px 24px;
+    font-size: 1rem;
+  }
+}
+/* End Empty State CSS */
+
+/****************************
+ * Search Highlight CSS
+ ****************************/
+mark {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-weight: 600;
+  animation: highlightPulse 0.5s ease;
+}
+
+@keyframes highlightPulse {
+  0% {
+    background-color: #ffc107;
+  }
+  100% {
+    background-color: #fff3cd;
+  }
+}
+/* End Search Highlight CSS */
 
 /* Small Devices (576px - 767px) - Mobile Landscape / Small Tablets */
 @media (min-width: 576px) and (max-width: 767.98px) {

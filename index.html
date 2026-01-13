@@ -458,6 +458,141 @@
     </div>
   </div>
 
+  <!-- Edit Item Modal -->
+  <div id="editItemModal" class="modal-overlay d-none" role="dialog" aria-labelledby="editItemTitle" aria-modal="true">
+    <div class="modal-content edit-item-modal">
+      <div class="modal-header">
+        <h3 id="editItemTitle">✏️ แก้ไขรายการ</h3>
+        <button type="button" class="modal-close-btn" id="closeEditItemModal" aria-label="ปิดหน้าต่าง">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-3">แก้ไขชื่อรายการตามที่ต้องการ</p>
+        
+        <form id="editItemForm">
+          <div class="mb-3">
+            <label for="editItemName" class="form-label">ชื่อรายการ <span class="text-danger">*</span></label>
+            <div class="input-wrapper">
+              <input 
+                type="text" 
+                class="form-control" 
+                id="editItemName" 
+                placeholder="กรอกชื่อรายการ..."
+                required
+                autocomplete="off"
+                maxlength="100"
+              />
+              <span class="char-counter" id="editCharCounter">0/100</span>
+            </div>
+            <div id="editItemNameError" class="invalid-feedback"></div>
+          </div>
+          
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="cancelEditItem">ยกเลิก</button>
+            <button type="submit" class="btn btn-primary" id="submitEditItem">
+              <span class="btn-text">บันทึกการเปลี่ยนแปลง</span>
+              <span class="spinner-border spinner-border-sm d-none"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteConfirmModal" class="modal-overlay d-none" role="dialog" aria-labelledby="deleteConfirmTitle" aria-modal="true">
+    <div class="modal-content delete-confirm-modal">
+      <div class="modal-header">
+        <h3 id="deleteConfirmTitle">🗑️ ยืนยันการลบ</h3>
+        <button type="button" class="modal-close-btn" id="closeDeleteConfirmModal" aria-label="ปิดหน้าต่าง">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="warning-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
+        
+        <p class="delete-message">
+          คุณแน่ใจหรือไม่ที่จะลบรายการนี้?
+        </p>
+        
+        <div class="delete-item-info">
+          <strong id="deleteItemName"></strong>
+        </div>
+        
+        <p class="text-danger small mb-0">
+          <strong>⚠️ คำเตือน:</strong> การดำเนินการนี้ไม่สามารถย้อนกลับได้!
+        </p>
+        
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelDelete">ยกเลิก</button>
+          <button type="button" class="btn btn-danger" id="confirmDelete">
+            <span class="btn-text">ลบรายการ</span>
+            <span class="spinner-border spinner-border-sm d-none"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Delete Modal -->
+  <div id="bulkDeleteModal" class="modal-overlay d-none" role="dialog" aria-labelledby="bulkDeleteTitle" aria-modal="true">
+    <div class="modal-content bulk-delete-modal">
+      <div class="modal-header">
+        <h3 id="bulkDeleteTitle">🗑️ ยืนยันการลบหลายรายการ</h3>
+        <button type="button" class="modal-close-btn" id="closeBulkDeleteModal" aria-label="ปิดหน้าต่าง">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="warning-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
+        
+        <p class="delete-message">
+          คุณกำลังจะลบ <strong id="bulkDeleteCount">0</strong> รายการ
+        </p>
+        
+        <div class="bulk-delete-list-container">
+          <p class="text-muted small mb-2">รายการที่จะลบ:</p>
+          <ul id="bulkDeleteList" class="bulk-delete-list">
+          </ul>
+        </div>
+        
+        <p class="text-danger small mb-0">
+          <strong>⚠️ คำเตือน:</strong> การดำเนินการนี้ไม่สามารถย้อนกลับได้!
+        </p>
+        
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancelBulkDelete">ยกเลิก</button>
+          <button type="button" class="btn btn-danger" id="confirmBulkDelete">
+            <span class="btn-text">ลบทั้งหมด</span>
+            <span class="spinner-border spinner-border-sm d-none"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Change Password Modal -->
   <div id="changePasswordModal" class="modal-overlay d-none" role="dialog" aria-labelledby="changePasswordTitle" aria-modal="true">
     <div class="modal-content password-modal">
@@ -610,10 +745,11 @@
       📥 Download
     </button>
     <ul class="dropdown-menu">
-      <li><a class="dropdown-item" href="#" id="downloadCsvBtn">📄 CSV</a></li>
+      <li><a class="dropdown-item" href="#" id="downloadCsvBtn">📄 <span id="csvBtnText">CSV</span></a></li>
       <li><a class="dropdown-item" href="#" id="downloadPdfBtn">📕 PDF</a></li>
     </ul>
   </div>
+
 
   <div id="dataContainer">
     <div id="loadingSpinner" class="d-none">
@@ -625,10 +761,48 @@
 
     <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
 
+    <!-- Bulk Actions Bar -->
+    <div id="bulkActionsBar" class="bulk-actions-bar d-none">
+      <div class="bulk-actions-content">
+        <span class="bulk-actions-text">
+          <strong id="selectedCount">0</strong> รายการถูกเลือก
+        </span>
+        <div class="bulk-actions-buttons">
+          <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAllBtn">
+            ยกเลิกทั้งหมด
+          </button>
+          <button type="button" class="btn btn-sm btn-danger" id="bulkDeleteBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            ลบที่เลือก
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="empty-state-container d-none">
+      <div class="empty-state-content">
+        <div class="empty-state-icon">
+          📋
+        </div>
+        <h3 class="empty-state-title">ยังไม่มีข้อมูล</h3>
+        <p class="empty-state-description">เริ่มต้นโดยการเพิ่มรายการแรกของคุณ</p>
+        <button id="emptyStateAddBtn" class="btn-empty-state">
+          ➕ เพิ่มรายการแรก
+        </button>
+      </div>
+    </div>
+
     <div id="tableContainer" class="table-responsive d-none">
       <table id="dataTable" class="table">
         <thead>
           <tr>
+            <th scope="col" style="width: 50px;" class="text-center">
+              <input type="checkbox" id="selectAllCheckbox" title="เลือกทั้งหมดในหน้านี้">
+            </th>
             <th scope="col" style="width: 50px;"></th>
             <th scope="col" class="sortable" data-column="index">#</th>
             <th scope="col" class="sortable" data-column="name">Name <span class="sort-indicator"></span></th>
