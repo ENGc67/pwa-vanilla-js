@@ -2095,6 +2095,173 @@ hr {
 }
 
 /* =========================================================
+   ➕ ADD ITEM MODAL
+   ========================================================= */
+
+.add-item-modal {
+  max-width: 500px;
+  width: 90%;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.add-item-modal .modal-header {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: var(--radius) var(--radius) 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.add-item-modal .modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.add-item-modal .modal-header .icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-item-modal .modal-header .close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1.25rem;
+  padding: 0;
+}
+
+.add-item-modal .modal-header .close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.add-item-modal .modal-body {
+  padding: 1.5rem;
+}
+
+.add-item-modal .input-wrapper {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.add-item-modal .input-wrapper label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+}
+
+.add-item-modal .input-wrapper .form-control {
+  padding-right: 4.5rem;
+  border: 2px solid hsl(var(--border));
+  transition: all 0.2s;
+}
+
+.add-item-modal .input-wrapper .form-control:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  outline: none;
+}
+
+.add-item-modal .char-counter {
+  position: absolute;
+  right: 1rem;
+  top: 2.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  pointer-events: none;
+  transition: color 0.2s;
+}
+
+.add-item-modal .char-counter.warning {
+  color: #f59e0b;
+}
+
+.add-item-modal .char-counter.danger {
+  color: #ef4444;
+}
+
+.add-item-modal .modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.add-item-modal .modal-actions .btn {
+  min-width: 100px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.add-item-modal .modal-actions .btn-secondary {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+}
+
+.add-item-modal .modal-actions .btn-secondary:hover {
+  background: hsl(var(--accent));
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.add-item-modal .modal-actions .btn-primary {
+  background: #10b981;
+  border: none;
+  color: white;
+}
+
+.add-item-modal .modal-actions .btn-primary:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.add-item-modal .modal-actions .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.add-item-modal .btn-primary .spinner-border {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+  margin-right: 0.5rem;
+}
+
+/* =========================================================
    �💀 LOADING SKELETONS
    ========================================================= */
 

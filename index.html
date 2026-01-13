@@ -413,6 +413,51 @@
     </div>
   </div>
 
+  <!-- Add Item Modal -->
+  <div id="addItemModal" class="modal-overlay d-none" role="dialog" aria-labelledby="addItemTitle" aria-modal="true">
+    <div class="modal-content add-item-modal">
+      <div class="modal-header">
+        <h3 id="addItemTitle">➕ เพิ่มรายการใหม่</h3>
+        <button type="button" class="modal-close-btn" id="closeAddItemModal" aria-label="ปิดหน้าต่าง">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-3">กรุณากรอกชื่อรายการที่ต้องการเพิ่ม</p>
+        
+        <form id="addItemForm">
+          <div class="mb-3">
+            <label for="itemName" class="form-label">ชื่อรายการ <span class="text-danger">*</span></label>
+            <div class="input-wrapper">
+              <input 
+                type="text" 
+                class="form-control" 
+                id="itemName" 
+                placeholder="กรอกชื่อรายการ..."
+                required
+                autocomplete="off"
+                maxlength="100"
+              />
+              <span class="char-counter" id="charCounter">0/100</span>
+            </div>
+            <div id="itemNameError" class="invalid-feedback"></div>
+          </div>
+          
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="cancelAddItem">ยกเลิก</button>
+            <button type="submit" class="btn btn-success" id="submitAddItem">
+              <span class="btn-text">เพิ่มรายการ</span>
+              <span class="spinner-border spinner-border-sm d-none"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Change Password Modal -->
   <div id="changePasswordModal" class="modal-overlay d-none" role="dialog" aria-labelledby="changePasswordTitle" aria-modal="true">
     <div class="modal-content password-modal">

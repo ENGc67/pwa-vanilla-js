@@ -1583,29 +1583,137 @@ function setupDataManagement() {
     console.error('❌ Load Data button not found');
   }
   
-  // Add Item Button
+  // Add Item Modal Management
+  const addItemModal = document.getElementById('addItemModal');
   const addItemBtn = document.getElementById('addItemBtn');
+  const closeAddItemModal = document.getElementById('closeAddItemModal');
+  const cancelAddItem = document.getElementById('cancelAddItem');
+  const addItemForm = document.getElementById('addItemForm');
+  const itemNameInput = document.getElementById('itemName');
+  const charCounter = document.getElementById('charCounter');
+  const submitAddItem = document.getElementById('submitAddItem');
+
+  // Character counter
+  if (itemNameInput && charCounter) {
+    itemNameInput.addEventListener('input', () => {
+      const length = itemNameInput.value.length;
+      charCounter.textContent = `${length}/100`;
+      
+      // Visual feedback
+      if (length > 80) {
+        charCounter.style.color = '#dc3545';
+      } else if (length > 50) {
+        charCounter.style.color = '#ffc107';
+      } else {
+        charCounter.style.color = '#6c757d';
+      }
+    });
+  }
+
+  // Open modal
   if (addItemBtn) {
     console.log('✅ Add Item button found');
-    addItemBtn.addEventListener('click', async () => {
+    addItemBtn.addEventListener('click', () => {
       console.log('➕ Add Item button clicked');
-      const name = prompt('Enter item name:');
-      if (!name || !name.trim()) return;
-
-      const { error } = await db
-        .from('ID')
-        .insert([{ NAME: name.trim() }]);
-
-      if (error) {
-        console.error('Error adding item:', error);
-        showToast('Error adding item: ' + error.message, 'error');
-      } else {
-        showToast('Item added successfully!', 'success', 2000);
-        loadData(); // Reload data
+      if (addItemModal) {
+        addItemModal.classList.remove('d-none');
+        setTimeout(() => {
+          addItemModal.classList.add('show');
+          if (itemNameInput) itemNameInput.focus();
+        }, 10);
       }
     });
   } else {
     console.error('❌ Add Item button not found');
+  }
+
+  // Close modal function
+  function closeAddItemModalFunc() {
+    if (addItemModal) {
+      addItemModal.classList.remove('show');
+      setTimeout(() => {
+        addItemModal.classList.add('d-none');
+        if (addItemForm) addItemForm.reset();
+        if (charCounter) charCounter.textContent = '0/100';
+        if (itemNameInput) itemNameInput.classList.remove('is-invalid');
+      }, 300);
+    }
+  }
+
+  // Close modal events
+  if (closeAddItemModal) {
+    closeAddItemModal.addEventListener('click', closeAddItemModalFunc);
+  }
+
+  if (cancelAddItem) {
+    cancelAddItem.addEventListener('click', closeAddItemModalFunc);
+  }
+
+  // Close on overlay click
+  if (addItemModal) {
+    addItemModal.addEventListener('click', (e) => {
+      if (e.target === addItemModal) {
+        closeAddItemModalFunc();
+      }
+    });
+  }
+
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && addItemModal && !addItemModal.classList.contains('d-none')) {
+      closeAddItemModalFunc();
+    }
+  });
+
+  // Submit form
+  if (addItemForm) {
+    addItemForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const name = itemNameInput.value.trim();
+      if (!name) {
+        itemNameInput.classList.add('is-invalid');
+        document.getElementById('itemNameError').textContent = 'กรุณากรอกชื่อรายการ';
+        return;
+      }
+
+      // Show loading
+      const btnText = submitAddItem.querySelector('.btn-text');
+      const spinner = submitAddItem.querySelector('.spinner-border');
+      if (btnText) btnText.classList.add('d-none');
+      if (spinner) spinner.classList.remove('d-none');
+      submitAddItem.disabled = true;
+
+      try {
+        const { error } = await db
+          .from('ID')
+          .insert([{ NAME: name }]);
+
+        if (error) {
+          console.error('Error adding item:', error);
+          showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
+        } else {
+          showToast('✅ เพิ่มรายการสำเร็จ!', 'success', 2000);
+          closeAddItemModalFunc();
+          loadData(); // Reload data
+        }
+      } catch (err) {
+        console.error('Error:', err);
+        showToast('เกิดข้อผิดพลาดในการเพิ่มรายการ', 'error');
+      } finally {
+        // Hide loading
+        if (btnText) btnText.classList.remove('d-none');
+        if (spinner) spinner.classList.add('d-none');
+        submitAddItem.disabled = false;
+      }
+    });
+  }
+
+  // Remove validation error on input
+  if (itemNameInput) {
+    itemNameInput.addEventListener('input', () => {
+      itemNameInput.classList.remove('is-invalid');
+    });
   }
   
   // Download CSV Button
@@ -1647,6 +1755,20 @@ function setupDataManagement() {
     });
   }
   
+  // Items per page selector
+  const itemsPerPageSelect = document.getElementById('itemsPerPageSelect');
+  if (itemsPerPageSelect) {
+    console.log('✅ Items per page selector found');
+    itemsPerPageSelect.addEventListener('change', (e) => {
+      itemsPerPage = parseInt(e.target.value);
+      console.log(`📊 Items per page changed to: ${itemsPerPage}`);
+      resetPagination();
+      displayData();
+    });
+  } else {
+    console.error('❌ Items per page selector not found');
+  }
+  
   console.log('✅ Data management setup complete');
 }
 
@@ -1675,23 +1797,6 @@ if (searchInput) {
     }
   });
 }
-
-// Clear search button
-const clearSearchBtn = document.getElementById('clearSearchBtn');
-if (clearSearchBtn) {
-  clearSearchBtn.addEventListener('click', clearSearch);
-}
-
-// Items per page selector
-const itemsPerPageSelect = document.getElementById('itemsPerPageSelect');
-if (itemsPerPageSelect) {
-  itemsPerPageSelect.addEventListener('change', (e) => {
-    itemsPerPage = parseInt(e.target.value);
-    resetPagination();
-    displayData();
-  });
-}
-
 
 function downloadCSV() {
   if (originalData.length === 0) {
