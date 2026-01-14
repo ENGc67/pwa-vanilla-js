@@ -888,7 +888,72 @@ function showEmailVerificationModal(email) {
  * 🔑 OAUTH LOGIN (GitHub & Google)
  ****************************/
 
-// GitHub Login
+/**
+ * 🎯 ฟังก์ชันสำหรับจัดการ OAuth Callback
+ * เรียกใช้เมื่อ OAuth Provider (Google/GitHub) redirect กลับมา
+ */
+async function handleOAuthCallback() {
+  try {
+    // ตรวจสอบว่ามี hash params จาก OAuth redirect หรือไม่
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const hasAccessToken = hashParams.has('access_token');
+    const hasError = hashParams.has('error');
+    
+    if (hasError) {
+      const error = hashParams.get('error');
+      const errorDescription = hashParams.get('error_description');
+      console.error('❌ OAuth Error:', error, errorDescription);
+      showToast(`เข้าสู่ระบบไม่สำเร็จ: ${errorDescription || error}`, 'error');
+      
+      // ลบ hash parameters และ reload
+      window.location.hash = '';
+      return;
+    }
+    
+    if (hasAccessToken) {
+      console.log('🔄 Processing OAuth callback...');
+      
+      // Supabase จะจัดการ token และ session อัตโนมัติผ่าน onAuthStateChange
+      // แต่เราต้อง clean URL hash
+      
+      // รอให้ Supabase process session
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // ตรวจสอบ session
+      const { data: { session }, error } = await db.auth.getSession();
+      
+      if (error) {
+        console.error('❌ Failed to get session:', error);
+        showToast('ไม่สามารถเข้าสู่ระบบได้: ' + error.message, 'error');
+        window.location.hash = '';
+        return;
+      }
+      
+      if (session) {
+        console.log('✅ OAuth login successful:', session.user.email);
+        showToast(`เข้าสู่ระบบสำเร็จ ยินดีต้อนรับ ${session.user.email}`, 'success');
+        
+        // ลบ hash parameters
+        window.history.replaceState(null, null, window.location.pathname);
+        
+        // แสดงหน้า App (onAuthStateChange จะจัดการให้)
+        // showApp(session.user); // ไม่ต้องเรียกเพราะ onAuthStateChange จะเรียกให้
+      } else {
+        console.warn('⚠️ No session after OAuth redirect');
+        window.location.hash = '';
+      }
+    }
+  } catch (error) {
+    console.error('❌ Error handling OAuth callback:', error);
+    showToast('เกิดข้อผิดพลาดในการเข้าสู่ระบบ: ' + error.message, 'error');
+    window.location.hash = '';
+  }
+}
+
+/**
+ * 🔐 GitHub Login
+ * เข้าสู่ระบบด้วย GitHub OAuth
+ */
 document.getElementById('githubLoginBtn').addEventListener('click', async () => {
   const githubBtn = document.getElementById('githubLoginBtn');
   
@@ -896,17 +961,22 @@ document.getElementById('githubLoginBtn').addEventListener('click', async () => 
     githubBtn.disabled = true;
     githubBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังเชื่อมต่อ...';
     
+    // เรียกใช้ Supabase OAuth
     const { data, error } = await db.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: window.location.origin
+        redirectTo: window.location.origin, // URL ที่จะ redirect กลับมาหลัง login
+        skipBrowserRedirect: false // ให้ redirect ไปยัง GitHub OAuth page
       }
     });
     
     if (error) throw error;
     
+    // เมื่อสำเร็จ ระบบจะ redirect ไปยัง GitHub OAuth page อัตโนมัติ
+    console.log('🔄 Redirecting to GitHub OAuth...');
+    
   } catch (error) {
-    console.error('GitHub login error:', error);
+    console.error('❌ GitHub login error:', error);
     showToast('ไม่สามารถเข้าสู่ระบบด้วย GitHub ได้: ' + error.message, 'error');
     
     // Reset button
@@ -920,7 +990,10 @@ document.getElementById('githubLoginBtn').addEventListener('click', async () => 
   }
 });
 
-// Google Login
+/**
+ * 🔐 Google Login
+ * เข้าสู่ระบบด้วย Google OAuth
+ */
 document.getElementById('googleLoginBtn').addEventListener('click', async () => {
   const googleBtn = document.getElementById('googleLoginBtn');
   
@@ -928,17 +1001,26 @@ document.getElementById('googleLoginBtn').addEventListener('click', async () => 
     googleBtn.disabled = true;
     googleBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังเชื่อมต่อ...';
     
+    // เรียกใช้ Supabase OAuth
     const { data, error } = await db.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin
+        redirectTo: window.location.origin, // URL ที่จะ redirect กลับมาหลัง login
+        skipBrowserRedirect: false, // ให้ redirect ไปยัง Google OAuth page
+        queryParams: {
+          access_type: 'offline', // ขอ refresh token สำหรับ offline access
+          prompt: 'consent' // บังคับให้แสดงหน้า consent เสมอ
+        }
       }
     });
     
     if (error) throw error;
     
+    // เมื่อสำเร็จ ระบบจะ redirect ไปยัง Google OAuth page อัตโนมัติ
+    console.log('🔄 Redirecting to Google OAuth...');
+    
   } catch (error) {
-    console.error('Google login error:', error);
+    console.error('❌ Google login error:', error);
     showToast('ไม่สามารถเข้าสู่ระบบด้วย Google ได้: ' + error.message, 'error');
     
     // Reset button
@@ -1200,6 +1282,18 @@ setTimeout(() => {
     checkAuthStatus();
   }
 }, 2000);
+
+/**
+ * 🔄 จัดการ OAuth Redirect Callback เมื่อหน้าเว็บโหลด
+ * ตรวจสอบว่ามี access_token ใน URL hash หรือไม่
+ */
+(async function initializeAuth() {
+  // ตรวจสอบว่ามี OAuth callback hash หรือไม่
+  if (window.location.hash && (window.location.hash.includes('access_token') || window.location.hash.includes('error'))) {
+    console.log('🔍 Detected OAuth callback in URL');
+    await handleOAuthCallback();
+  }
+})();
 
 
 /****************************
