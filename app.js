@@ -3416,6 +3416,7 @@ function toggleDetails(row, item) {
     existingDetailRow.remove();
     expandBtn.innerHTML = '➕';
     expandBtn.title = 'Show Details';
+    row.classList.remove('expanded');
     return;
   }
 
@@ -3479,9 +3480,10 @@ function toggleDetails(row, item) {
   // Insert detail row after the current row
   row.parentNode.insertBefore(detailRow, row.nextSibling);
 
-  // Update button
+  // Update button and add expanded class
   expandBtn.innerHTML = '➖';
   expandBtn.title = 'Hide Details';
+  row.classList.add('expanded');
 }
 
 /****************************
