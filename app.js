@@ -587,6 +587,49 @@ function showLogin() {
   console.log('📱 Showing login page');
   document.getElementById('loginContainer').classList.remove('d-none');
   document.getElementById('appContainer').classList.add('d-none');
+  
+  // Reset all initialization flags when logging out
+  resetInitializationFlags();
+}
+
+// Reset all initialization flags to allow fresh setup on next login
+function resetInitializationFlags() {
+  console.log('🔄 Resetting all initialization flags');
+  
+  if (typeof userDropdownHandlers !== 'undefined') {
+    userDropdownHandlers.isInitialized = false;
+  }
+  if (typeof dataManagementHandlers !== 'undefined') {
+    dataManagementHandlers.isInitialized = false;
+  }
+  if (typeof profileModalHandlers !== 'undefined') {
+    profileModalHandlers.isInitialized = false;
+  }
+  if (typeof changePasswordHandlers !== 'undefined') {
+    changePasswordHandlers.isInitialized = false;
+  }
+  if (typeof avatarPickerHandlers !== 'undefined') {
+    avatarPickerHandlers.isInitialized = false;
+  }
+  if (typeof helloButtonHandlers !== 'undefined') {
+    helloButtonHandlers.isInitialized = false;
+  }
+  
+  // Reset data attributes on elements
+  const elementsToReset = [
+    'addItemBtn',
+    'emptyStateAddBtn',
+    'addItemForm',
+    'itemName',
+    'helloBtn'
+  ];
+  
+  elementsToReset.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      delete el.dataset.initialized;
+    }
+  });
 }
 
 // แสดงหน้าแอปหลัก
@@ -1234,19 +1277,22 @@ document.addEventListener('mousedown', () => {
 });
 
 // Logout Button
-document.getElementById('logoutBtn').addEventListener('click', async () => {
-  const { error } = await db.auth.signOut();
-  
-  if (error) {
-    showToast('เกิดข้อผิดพลาดในการออกจากระบบ: ' + error.message, 'error');
-  } else {
-    showLogin();
-    // Clear data
-    originalData = [];
-    document.getElementById('dataTableBody').innerHTML = '';
-    document.getElementById('tableContainer').classList.add('d-none');
-  }
-});
+const logoutBtn = document.getElementById('logoutMenuBtn');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', async () => {
+    const { error } = await db.auth.signOut();
+    
+    if (error) {
+      showToast('เกิดข้อผิดพลาดในการออกจากระบบ: ' + error.message, 'error');
+    } else {
+      showLogin();
+      // Clear data
+      originalData = [];
+      document.getElementById('dataTableBody').innerHTML = '';
+      document.getElementById('tableContainer').classList.add('d-none');
+    }
+  });
+}
 
 // ฟังการเปลี่ยนแปลง auth state
 // Listen for auth state changes
@@ -1926,8 +1972,21 @@ function clearSearch() {
  * 📊 DATA MANAGEMENT SETUP
  ****************************/
 
+// Store initialization state to prevent duplicate handlers
+let dataManagementHandlers = {
+  isInitialized: false
+};
+
 function setupDataManagement() {
-  console.log('📊 Setting up data management...');
+  console.log('📊 Setting up data management...', {
+    alreadyInitialized: dataManagementHandlers.isInitialized
+  });
+  
+  // Prevent duplicate initialization
+  if (dataManagementHandlers.isInitialized) {
+    console.log('⚠️ Data management already initialized, skipping');
+    return;
+  }
   
   // Load Data Button
   const loadBtn = document.getElementById('loadDataBtn');
@@ -1970,17 +2029,23 @@ function setupDataManagement() {
 
   // Open modal
   if (addItemBtn) {
-    console.log('✅ Add Item button found');
-    addItemBtn.addEventListener('click', () => {
-      console.log('➕ Add Item button clicked');
-      if (addItemModal) {
-        addItemModal.classList.remove('d-none');
-        setTimeout(() => {
-          addItemModal.classList.add('show');
-          if (itemNameInput) itemNameInput.focus();
-        }, 10);
-      }
-    });
+    // Check if already initialized using data attribute
+    if (addItemBtn.dataset.initialized === 'true') {
+      console.log('⚠️ Add Item button already has listener, skipping');
+    } else {
+      console.log('✅ Add Item button found, adding listener');
+      addItemBtn.addEventListener('click', () => {
+        console.log('➕ Add Item button clicked');
+        if (addItemModal) {
+          addItemModal.classList.remove('d-none');
+          setTimeout(() => {
+            addItemModal.classList.add('show');
+            if (itemNameInput) itemNameInput.focus();
+          }, 10);
+        }
+      });
+      addItemBtn.dataset.initialized = 'true';
+    }
   } else {
     console.error('❌ Add Item button not found');
   }
@@ -1988,16 +2053,21 @@ function setupDataManagement() {
   // Empty state add button
   const emptyStateAddBtn = document.getElementById('emptyStateAddBtn');
   if (emptyStateAddBtn) {
-    emptyStateAddBtn.addEventListener('click', () => {
-      console.log('➕ Empty state add button clicked');
-      if (addItemModal) {
-        addItemModal.classList.remove('d-none');
-        setTimeout(() => {
-          addItemModal.classList.add('show');
-          if (itemNameInput) itemNameInput.focus();
-        }, 10);
-      }
-    });
+    if (emptyStateAddBtn.dataset.initialized === 'true') {
+      console.log('⚠️ Empty state button already has listener, skipping');
+    } else {
+      emptyStateAddBtn.addEventListener('click', () => {
+        console.log('➕ Empty state add button clicked');
+        if (addItemModal) {
+          addItemModal.classList.remove('d-none');
+          setTimeout(() => {
+            addItemModal.classList.add('show');
+            if (itemNameInput) itemNameInput.focus();
+          }, 10);
+        }
+      });
+      emptyStateAddBtn.dataset.initialized = 'true';
+    }
   }
 
   // Close modal function
@@ -2040,10 +2110,15 @@ function setupDataManagement() {
 
   // Submit form
   if (addItemForm) {
-    addItemForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const name = itemNameInput.value.trim();
+    if (addItemForm.dataset.initialized === 'true') {
+      console.log('⚠️ Add Item form already has submit listener, skipping');
+    } else {
+      console.log('✅ Adding submit listener to Add Item form');
+      addItemForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        console.log('📝 Add Item form submitted');
+        
+        const name = itemNameInput.value.trim();
       if (!name) {
         itemNameInput.classList.add('is-invalid');
         document.getElementById('itemNameError').textContent = 'กรุณากรอกชื่อรายการ';
@@ -2099,13 +2174,18 @@ function setupDataManagement() {
         submitAddItem.disabled = false;
       }
     });
+      addItemForm.dataset.initialized = 'true';
+    }
   }
 
   // Remove validation error on input
   if (itemNameInput) {
-    itemNameInput.addEventListener('input', () => {
-      itemNameInput.classList.remove('is-invalid');
-    });
+    if (itemNameInput.dataset.initialized !== 'true') {
+      itemNameInput.addEventListener('input', () => {
+        itemNameInput.classList.remove('is-invalid');
+      });
+      itemNameInput.dataset.initialized = 'true';
+    }
   }
   
   /****************************
@@ -2431,6 +2511,8 @@ function setupDataManagement() {
     console.error('❌ Items per page selector not found');
   }
   
+  // Mark as initialized
+  dataManagementHandlers.isInitialized = true;
   console.log('✅ Data management setup complete');
 }
 
@@ -2651,6 +2733,12 @@ function downloadPDF() {
 /****************************
  * Hello User Button Handler
  ****************************/
+
+let helloButtonHandlers = {
+  isInitialized: false,
+  clickHandler: null
+};
+
 function setupHelloUserButton() {
   const helloBtn = document.getElementById('helloBtn');
   if (!helloBtn) {
@@ -2658,8 +2746,17 @@ function setupHelloUserButton() {
     return;
   }
   
-  console.log('✅ Hello button found');
-  helloBtn.addEventListener('click', async () => {
+  // Prevent duplicate initialization
+  if (helloButtonHandlers.isInitialized) {
+    console.log('⚠️ Hello button already initialized, skipping');
+    return;
+  }
+  
+  console.log('✅ Hello button found, setting up...');
+  
+  // Define the click handler
+  const clickHandler = async () => {
+    console.log('🔘 Hello button clicked');
     const input = document.getElementById('username');
     const greeting = document.getElementById('greeting');
     
@@ -2681,13 +2778,15 @@ function setupHelloUserButton() {
       greeting.className = 'alert alert-info';
       greeting.classList.remove('d-none');
     }
+    
+    console.log('📤 Inserting name:', name);
 
     const { error } = await db
       .from('ID')
       .insert([{ NAME: name }]);
 
     if (error) {
-      console.error(error);
+      console.error('❌ Insert error:', error);
       showToast('Error: ' + error.message, 'error');
       if (greeting) {
         greeting.textContent = '';
@@ -2696,6 +2795,7 @@ function setupHelloUserButton() {
       return;
     }
 
+    console.log('✅ Insert successful');
     showToast(`Hello ${name}!`, 'success', 3000);
     if (greeting) {
       greeting.textContent = `✅ Hello ${name}`;
@@ -2705,7 +2805,15 @@ function setupHelloUserButton() {
 
     // โหลดข้อมูลใหม่
     loadData();
-  });
+  };
+  
+  // Store handler reference and add listener once
+  helloButtonHandlers.clickHandler = clickHandler;
+  helloBtn.addEventListener('click', clickHandler, { once: false });
+  
+  // Mark as initialized
+  helloButtonHandlers.isInitialized = true;
+  console.log('✅ Hello button setup complete');
 }
 
 
@@ -2854,6 +2962,12 @@ function resetPagination() {
  * 👤 USER DROPDOWN MENU
  ****************************/
 
+// Store event handlers to prevent duplicates
+let userDropdownHandlers = {
+  isInitialized: false,
+  closeOutsideHandler: null
+};
+
 // Toggle dropdown menu
 function setupUserDropdown() {
   const userMenuBtn = document.getElementById('userMenuBtn');
@@ -2869,7 +2983,8 @@ function setupUserDropdown() {
     openProfileMenu: !!openProfileMenu,
     settingsMenu: !!settingsMenu,
     changePasswordMenu: !!changePasswordMenu,
-    logoutMenuBtn: !!logoutMenuBtn
+    logoutMenuBtn: !!logoutMenuBtn,
+    alreadyInitialized: userDropdownHandlers.isInitialized
   });
 
   if (!userMenuBtn || !userDropdown) {
@@ -2877,7 +2992,29 @@ function setupUserDropdown() {
     return;
   }
 
-  userMenuBtn.addEventListener('click', (e) => {
+  // Prevent duplicate initialization
+  if (userDropdownHandlers.isInitialized) {
+    console.log('⚠️ User dropdown already initialized, skipping');
+    return;
+  }
+
+  // Helper functions
+  function openUserDropdown() {
+    console.log('📂 Opening user dropdown');
+    userDropdown.classList.remove('d-none');
+    userMenuBtn.setAttribute('aria-expanded', 'true');
+    updateDropdownUserInfo();
+  }
+
+  function closeUserDropdown() {
+    if (userDropdown && !userDropdown.classList.contains('d-none')) {
+      userDropdown.classList.add('d-none');
+      userMenuBtn.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  // Main toggle handler
+  const toggleHandler = (e) => {
     console.log('🖱️ User menu button clicked');
     e.stopPropagation();
     const isExpanded = userMenuBtn.getAttribute('aria-expanded') === 'true';
@@ -2890,30 +3027,20 @@ function setupUserDropdown() {
       console.log('Opening dropdown');
       openUserDropdown();
     }
-  });
+  };
 
-  function openUserDropdown() {
-    console.log('📂 Opening user dropdown');
-    userDropdown.classList.remove('d-none');
-    userMenuBtn.setAttribute('aria-expanded', 'true');
-    
-    // Update dropdown user info
-    updateDropdownUserInfo();
-  }
-
-  function closeUserDropdown() {
-    userDropdown.classList.add('d-none');
-    userMenuBtn.setAttribute('aria-expanded', 'false');
-  }
+  userMenuBtn.addEventListener('click', toggleHandler);
 
   // Close dropdown when clicking outside
-  document.addEventListener('click', (e) => {
+  userDropdownHandlers.closeOutsideHandler = (e) => {
     if (userDropdown && !userDropdown.classList.contains('d-none')) {
       if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
         closeUserDropdown();
       }
     }
-  });
+  };
+  
+  document.addEventListener('click', userDropdownHandlers.closeOutsideHandler);
 
   // Dropdown menu actions
   if (openProfileMenu) {
@@ -2925,7 +3052,7 @@ function setupUserDropdown() {
         userProfileModal.classList.remove('d-none');
         await loadUserProfile();
       }
-    });
+    }, { once: false });
   }
 
   if (settingsMenu) {
@@ -2933,7 +3060,7 @@ function setupUserDropdown() {
       e.preventDefault();
       closeUserDropdown();
       showToast('ฟีเจอร์ตั้งค่ากำลังพัฒนา', 'info', 3000);
-    });
+    }, { once: false });
   }
 
   if (changePasswordMenu) {
@@ -2966,7 +3093,7 @@ function setupUserDropdown() {
           if (newPasswordInput) newPasswordInput.focus();
         }, 100);
       }
-    });
+    }, { once: false });
   }
 
   if (logoutMenuBtn) {
@@ -2985,13 +3112,14 @@ function setupUserDropdown() {
         console.error('❌ Logout error:', error);
         showToast('เกิดข้อผิดพลาดในการออกจากระบบ', 'error');
       }
-    });
+    }, { once: false });
   } else {
     console.error('❌ Logout button not found');
   }
 
-  // Make closeUserDropdown available globally
-  window.closeUserDropdown = closeUserDropdown;
+  // Mark as initialized
+  userDropdownHandlers.isInitialized = true;
+  console.log('✅ User dropdown fully initialized');
 }
 
 // Update dropdown user info
@@ -3038,6 +3166,11 @@ async function updateDropdownUserInfo() {
  * 👤 USER PROFILE MODAL
  ****************************/
 
+// Store initialization state
+let profileModalHandlers = {
+  isInitialized: false
+};
+
 function setupProfileModal() {
   const userProfileModal = document.getElementById('userProfileModal');
   const closeProfileModal = document.getElementById('closeProfileModal');
@@ -3045,6 +3178,12 @@ function setupProfileModal() {
   const changePasswordBtn = document.getElementById('changePasswordBtn');
 
   if (!userProfileModal) return;
+  
+  // Prevent duplicate initialization
+  if (profileModalHandlers.isInitialized) {
+    console.log('⚠️ Profile modal already initialized, skipping');
+    return;
+  }
 
   // Close profile modal
   if (closeProfileModal) {
@@ -3107,13 +3246,27 @@ function setupProfileModal() {
       }
     });
   }
+  
+  // Mark as initialized
+  profileModalHandlers.isInitialized = true;
+  console.log('✅ Profile modal setup complete');
 }
 
 /****************************
  * 🔐 CHANGE PASSWORD MODAL
  ****************************/
 
+// Store initialization state
+let changePasswordHandlers = {
+  isInitialized: false
+};
+
 function setupChangePasswordModal() {
+  // Prevent duplicate initialization
+  if (changePasswordHandlers.isInitialized) {
+    console.log('⚠️ Change password modal already initialized, skipping');
+    return;
+  }
   const changePasswordModal = document.getElementById('changePasswordModal');
   const closePasswordModal = document.getElementById('closePasswordModal');
   const cancelPasswordChange = document.getElementById('cancelPasswordChange');
@@ -3319,16 +3472,30 @@ function setupChangePasswordModal() {
       }
     });
   }
+  
+  // Mark as initialized
+  changePasswordHandlers.isInitialized = true;
+  console.log('✅ Change password modal setup complete');
 }
 
 // Change Password Modal handlers moved to setupChangePasswordModal function
 
 // Change avatar functionality
+let avatarPickerHandlers = {
+  isInitialized: false
+};
+
 function setupAvatarPicker() {
   const changeAvatarBtn = document.getElementById('changeAvatarBtn');
   const avatarOptions = document.getElementById('avatarOptions');
 
   if (!changeAvatarBtn || !avatarOptions) return;
+  
+  // Prevent duplicate initialization
+  if (avatarPickerHandlers.isInitialized) {
+    console.log('⚠️ Avatar picker already initialized, skipping');
+    return;
+  }
 
   changeAvatarBtn.addEventListener('click', () => {
     avatarOptions.classList.toggle('d-none');
@@ -3364,6 +3531,10 @@ function setupAvatarPicker() {
       showToast('เปลี่ยนรูปโปรไฟล์สำเร็จ!', 'success', 2000);
     });
   });
+  
+  // Mark as initialized
+  avatarPickerHandlers.isInitialized = true;
+  console.log('✅ Avatar picker setup complete');
 }
 
 // Load user profile data
