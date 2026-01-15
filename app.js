@@ -596,40 +596,24 @@ function showLogin() {
 function resetInitializationFlags() {
   console.log('🔄 Resetting all initialization flags');
   
+  // Remove document-level event listeners
+  if (typeof userDropdownHandlers !== 'undefined' && userDropdownHandlers.closeOutsideHandler) {
+    document.removeEventListener('click', userDropdownHandlers.closeOutsideHandler);
+    userDropdownHandlers.closeOutsideHandler = null;
+  }
+  
+  // Reset flags
   if (typeof userDropdownHandlers !== 'undefined') {
     userDropdownHandlers.isInitialized = false;
   }
   if (typeof dataManagementHandlers !== 'undefined') {
     dataManagementHandlers.isInitialized = false;
   }
-  if (typeof profileModalHandlers !== 'undefined') {
-    profileModalHandlers.isInitialized = false;
-  }
-  if (typeof changePasswordHandlers !== 'undefined') {
-    changePasswordHandlers.isInitialized = false;
-  }
-  if (typeof avatarPickerHandlers !== 'undefined') {
-    avatarPickerHandlers.isInitialized = false;
-  }
   if (typeof helloButtonHandlers !== 'undefined') {
     helloButtonHandlers.isInitialized = false;
   }
   
-  // Reset data attributes on elements
-  const elementsToReset = [
-    'addItemBtn',
-    'emptyStateAddBtn',
-    'addItemForm',
-    'itemName',
-    'helloBtn'
-  ];
-  
-  elementsToReset.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      delete el.dataset.initialized;
-    }
-  });
+  console.log('✅ All flags and listeners reset');
 }
 
 // แสดงหน้าแอปหลัก
@@ -931,72 +915,7 @@ function showEmailVerificationModal(email) {
  * 🔑 OAUTH LOGIN (GitHub & Google)
  ****************************/
 
-/**
- * 🎯 ฟังก์ชันสำหรับจัดการ OAuth Callback
- * เรียกใช้เมื่อ OAuth Provider (Google/GitHub) redirect กลับมา
- */
-async function handleOAuthCallback() {
-  try {
-    // ตรวจสอบว่ามี hash params จาก OAuth redirect หรือไม่
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const hasAccessToken = hashParams.has('access_token');
-    const hasError = hashParams.has('error');
-    
-    if (hasError) {
-      const error = hashParams.get('error');
-      const errorDescription = hashParams.get('error_description');
-      console.error('❌ OAuth Error:', error, errorDescription);
-      showToast(`เข้าสู่ระบบไม่สำเร็จ: ${errorDescription || error}`, 'error');
-      
-      // ลบ hash parameters และ reload
-      window.location.hash = '';
-      return;
-    }
-    
-    if (hasAccessToken) {
-      console.log('🔄 Processing OAuth callback...');
-      
-      // Supabase จะจัดการ token และ session อัตโนมัติผ่าน onAuthStateChange
-      // แต่เราต้อง clean URL hash
-      
-      // รอให้ Supabase process session
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // ตรวจสอบ session
-      const { data: { session }, error } = await db.auth.getSession();
-      
-      if (error) {
-        console.error('❌ Failed to get session:', error);
-        showToast('ไม่สามารถเข้าสู่ระบบได้: ' + error.message, 'error');
-        window.location.hash = '';
-        return;
-      }
-      
-      if (session) {
-        console.log('✅ OAuth login successful:', session.user.email);
-        showToast(`เข้าสู่ระบบสำเร็จ ยินดีต้อนรับ ${session.user.email}`, 'success');
-        
-        // ลบ hash parameters
-        window.history.replaceState(null, null, window.location.pathname);
-        
-        // แสดงหน้า App (onAuthStateChange จะจัดการให้)
-        // showApp(session.user); // ไม่ต้องเรียกเพราะ onAuthStateChange จะเรียกให้
-      } else {
-        console.warn('⚠️ No session after OAuth redirect');
-        window.location.hash = '';
-      }
-    }
-  } catch (error) {
-    console.error('❌ Error handling OAuth callback:', error);
-    showToast('เกิดข้อผิดพลาดในการเข้าสู่ระบบ: ' + error.message, 'error');
-    window.location.hash = '';
-  }
-}
-
-/**
- * 🔐 GitHub Login
- * เข้าสู่ระบบด้วย GitHub OAuth
- */
+// GitHub Login
 document.getElementById('githubLoginBtn').addEventListener('click', async () => {
   const githubBtn = document.getElementById('githubLoginBtn');
   
@@ -1004,22 +923,17 @@ document.getElementById('githubLoginBtn').addEventListener('click', async () => 
     githubBtn.disabled = true;
     githubBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังเชื่อมต่อ...';
     
-    // เรียกใช้ Supabase OAuth
     const { data, error } = await db.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: window.location.origin, // URL ที่จะ redirect กลับมาหลัง login
-        skipBrowserRedirect: false // ให้ redirect ไปยัง GitHub OAuth page
+        redirectTo: window.location.origin
       }
     });
     
     if (error) throw error;
     
-    // เมื่อสำเร็จ ระบบจะ redirect ไปยัง GitHub OAuth page อัตโนมัติ
-    console.log('🔄 Redirecting to GitHub OAuth...');
-    
   } catch (error) {
-    console.error('❌ GitHub login error:', error);
+    console.error('GitHub login error:', error);
     showToast('ไม่สามารถเข้าสู่ระบบด้วย GitHub ได้: ' + error.message, 'error');
     
     // Reset button
@@ -1033,10 +947,7 @@ document.getElementById('githubLoginBtn').addEventListener('click', async () => 
   }
 });
 
-/**
- * 🔐 Google Login
- * เข้าสู่ระบบด้วย Google OAuth
- */
+// Google Login
 document.getElementById('googleLoginBtn').addEventListener('click', async () => {
   const googleBtn = document.getElementById('googleLoginBtn');
   
@@ -1044,26 +955,17 @@ document.getElementById('googleLoginBtn').addEventListener('click', async () => 
     googleBtn.disabled = true;
     googleBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังเชื่อมต่อ...';
     
-    // เรียกใช้ Supabase OAuth
     const { data, error } = await db.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin, // URL ที่จะ redirect กลับมาหลัง login
-        skipBrowserRedirect: false, // ให้ redirect ไปยัง Google OAuth page
-        queryParams: {
-          access_type: 'offline', // ขอ refresh token สำหรับ offline access
-          prompt: 'consent' // บังคับให้แสดงหน้า consent เสมอ
-        }
+        redirectTo: window.location.origin
       }
     });
     
     if (error) throw error;
     
-    // เมื่อสำเร็จ ระบบจะ redirect ไปยัง Google OAuth page อัตโนมัติ
-    console.log('🔄 Redirecting to Google OAuth...');
-    
   } catch (error) {
-    console.error('❌ Google login error:', error);
+    console.error('Google login error:', error);
     showToast('ไม่สามารถเข้าสู่ระบบด้วย Google ได้: ' + error.message, 'error');
     
     // Reset button
@@ -1276,23 +1178,8 @@ document.addEventListener('mousedown', () => {
   document.body.classList.remove('keyboard-navigation');
 });
 
-// Logout Button
-const logoutBtn = document.getElementById('logoutMenuBtn');
-if (logoutBtn) {
-  logoutBtn.addEventListener('click', async () => {
-    const { error } = await db.auth.signOut();
-    
-    if (error) {
-      showToast('เกิดข้อผิดพลาดในการออกจากระบบ: ' + error.message, 'error');
-    } else {
-      showLogin();
-      // Clear data
-      originalData = [];
-      document.getElementById('dataTableBody').innerHTML = '';
-      document.getElementById('tableContainer').classList.add('d-none');
-    }
-  });
-}
+// Logout Button - Now handled in setupUserDropdown()
+// Removed duplicate code to prevent errors
 
 // ฟังการเปลี่ยนแปลง auth state
 // Listen for auth state changes
@@ -1328,18 +1215,6 @@ setTimeout(() => {
     checkAuthStatus();
   }
 }, 2000);
-
-/**
- * 🔄 จัดการ OAuth Redirect Callback เมื่อหน้าเว็บโหลด
- * ตรวจสอบว่ามี access_token ใน URL hash หรือไม่
- */
-(async function initializeAuth() {
-  // ตรวจสอบว่ามี OAuth callback hash หรือไม่
-  if (window.location.hash && (window.location.hash.includes('access_token') || window.location.hash.includes('error'))) {
-    console.log('🔍 Detected OAuth callback in URL');
-    await handleOAuthCallback();
-  }
-})();
 
 
 /****************************
@@ -2029,23 +1904,17 @@ function setupDataManagement() {
 
   // Open modal
   if (addItemBtn) {
-    // Check if already initialized using data attribute
-    if (addItemBtn.dataset.initialized === 'true') {
-      console.log('⚠️ Add Item button already has listener, skipping');
-    } else {
-      console.log('✅ Add Item button found, adding listener');
-      addItemBtn.addEventListener('click', () => {
-        console.log('➕ Add Item button clicked');
-        if (addItemModal) {
-          addItemModal.classList.remove('d-none');
-          setTimeout(() => {
-            addItemModal.classList.add('show');
-            if (itemNameInput) itemNameInput.focus();
-          }, 10);
-        }
-      });
-      addItemBtn.dataset.initialized = 'true';
-    }
+    console.log('✅ Add Item button found');
+    addItemBtn.addEventListener('click', () => {
+      console.log('➕ Add Item button clicked');
+      if (addItemModal) {
+        addItemModal.classList.remove('d-none');
+        setTimeout(() => {
+          addItemModal.classList.add('show');
+          if (itemNameInput) itemNameInput.focus();
+        }, 10);
+      }
+    });
   } else {
     console.error('❌ Add Item button not found');
   }
@@ -2053,21 +1922,16 @@ function setupDataManagement() {
   // Empty state add button
   const emptyStateAddBtn = document.getElementById('emptyStateAddBtn');
   if (emptyStateAddBtn) {
-    if (emptyStateAddBtn.dataset.initialized === 'true') {
-      console.log('⚠️ Empty state button already has listener, skipping');
-    } else {
-      emptyStateAddBtn.addEventListener('click', () => {
-        console.log('➕ Empty state add button clicked');
-        if (addItemModal) {
-          addItemModal.classList.remove('d-none');
-          setTimeout(() => {
-            addItemModal.classList.add('show');
-            if (itemNameInput) itemNameInput.focus();
-          }, 10);
-        }
-      });
-      emptyStateAddBtn.dataset.initialized = 'true';
-    }
+    emptyStateAddBtn.addEventListener('click', () => {
+      console.log('➕ Empty state add button clicked');
+      if (addItemModal) {
+        addItemModal.classList.remove('d-none');
+        setTimeout(() => {
+          addItemModal.classList.add('show');
+          if (itemNameInput) itemNameInput.focus();
+        }, 10);
+      }
+    });
   }
 
   // Close modal function
@@ -2110,15 +1974,10 @@ function setupDataManagement() {
 
   // Submit form
   if (addItemForm) {
-    if (addItemForm.dataset.initialized === 'true') {
-      console.log('⚠️ Add Item form already has submit listener, skipping');
-    } else {
-      console.log('✅ Adding submit listener to Add Item form');
-      addItemForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        console.log('📝 Add Item form submitted');
-        
-        const name = itemNameInput.value.trim();
+    addItemForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const name = itemNameInput.value.trim();
       if (!name) {
         itemNameInput.classList.add('is-invalid');
         document.getElementById('itemNameError').textContent = 'กรุณากรอกชื่อรายการ';
@@ -2174,18 +2033,13 @@ function setupDataManagement() {
         submitAddItem.disabled = false;
       }
     });
-      addItemForm.dataset.initialized = 'true';
-    }
   }
 
   // Remove validation error on input
   if (itemNameInput) {
-    if (itemNameInput.dataset.initialized !== 'true') {
-      itemNameInput.addEventListener('input', () => {
-        itemNameInput.classList.remove('is-invalid');
-      });
-      itemNameInput.dataset.initialized = 'true';
-    }
+    itemNameInput.addEventListener('input', () => {
+      itemNameInput.classList.remove('is-invalid');
+    });
   }
   
   /****************************
@@ -2735,8 +2589,7 @@ function downloadPDF() {
  ****************************/
 
 let helloButtonHandlers = {
-  isInitialized: false,
-  clickHandler: null
+  isInitialized: false
 };
 
 function setupHelloUserButton() {
@@ -2754,7 +2607,6 @@ function setupHelloUserButton() {
   
   console.log('✅ Hello button found, setting up...');
   
-  // Define the click handler
   const clickHandler = async () => {
     console.log('🔘 Hello button clicked');
     const input = document.getElementById('username');
@@ -2778,9 +2630,8 @@ function setupHelloUserButton() {
       greeting.className = 'alert alert-info';
       greeting.classList.remove('d-none');
     }
-    
-    console.log('📤 Inserting name:', name);
 
+    console.log('📤 Inserting name:', name);
     const { error } = await db
       .from('ID')
       .insert([{ NAME: name }]);
@@ -2807,9 +2658,7 @@ function setupHelloUserButton() {
     loadData();
   };
   
-  // Store handler reference and add listener once
-  helloButtonHandlers.clickHandler = clickHandler;
-  helloBtn.addEventListener('click', clickHandler, { once: false });
+  helloBtn.addEventListener('click', clickHandler);
   
   // Mark as initialized
   helloButtonHandlers.isInitialized = true;
@@ -3032,9 +2881,15 @@ function setupUserDropdown() {
   userMenuBtn.addEventListener('click', toggleHandler);
 
   // Close dropdown when clicking outside
+  // Remove old listener first if exists
+  if (userDropdownHandlers.closeOutsideHandler) {
+    document.removeEventListener('click', userDropdownHandlers.closeOutsideHandler);
+  }
+  
   userDropdownHandlers.closeOutsideHandler = (e) => {
     if (userDropdown && !userDropdown.classList.contains('d-none')) {
       if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
+        console.log('Closing dropdown (clicked outside)');
         closeUserDropdown();
       }
     }
@@ -3052,7 +2907,7 @@ function setupUserDropdown() {
         userProfileModal.classList.remove('d-none');
         await loadUserProfile();
       }
-    }, { once: false });
+    });
   }
 
   if (settingsMenu) {
@@ -3060,7 +2915,7 @@ function setupUserDropdown() {
       e.preventDefault();
       closeUserDropdown();
       showToast('ฟีเจอร์ตั้งค่ากำลังพัฒนา', 'info', 3000);
-    }, { once: false });
+    });
   }
 
   if (changePasswordMenu) {
@@ -3093,7 +2948,7 @@ function setupUserDropdown() {
           if (newPasswordInput) newPasswordInput.focus();
         }, 100);
       }
-    }, { once: false });
+    });
   }
 
   if (logoutMenuBtn) {
@@ -3112,7 +2967,7 @@ function setupUserDropdown() {
         console.error('❌ Logout error:', error);
         showToast('เกิดข้อผิดพลาดในการออกจากระบบ', 'error');
       }
-    }, { once: false });
+    });
   } else {
     console.error('❌ Logout button not found');
   }
@@ -3166,11 +3021,6 @@ async function updateDropdownUserInfo() {
  * 👤 USER PROFILE MODAL
  ****************************/
 
-// Store initialization state
-let profileModalHandlers = {
-  isInitialized: false
-};
-
 function setupProfileModal() {
   const userProfileModal = document.getElementById('userProfileModal');
   const closeProfileModal = document.getElementById('closeProfileModal');
@@ -3178,12 +3028,6 @@ function setupProfileModal() {
   const changePasswordBtn = document.getElementById('changePasswordBtn');
 
   if (!userProfileModal) return;
-  
-  // Prevent duplicate initialization
-  if (profileModalHandlers.isInitialized) {
-    console.log('⚠️ Profile modal already initialized, skipping');
-    return;
-  }
 
   // Close profile modal
   if (closeProfileModal) {
@@ -3246,27 +3090,13 @@ function setupProfileModal() {
       }
     });
   }
-  
-  // Mark as initialized
-  profileModalHandlers.isInitialized = true;
-  console.log('✅ Profile modal setup complete');
 }
 
 /****************************
  * 🔐 CHANGE PASSWORD MODAL
  ****************************/
 
-// Store initialization state
-let changePasswordHandlers = {
-  isInitialized: false
-};
-
 function setupChangePasswordModal() {
-  // Prevent duplicate initialization
-  if (changePasswordHandlers.isInitialized) {
-    console.log('⚠️ Change password modal already initialized, skipping');
-    return;
-  }
   const changePasswordModal = document.getElementById('changePasswordModal');
   const closePasswordModal = document.getElementById('closePasswordModal');
   const cancelPasswordChange = document.getElementById('cancelPasswordChange');
@@ -3472,30 +3302,16 @@ function setupChangePasswordModal() {
       }
     });
   }
-  
-  // Mark as initialized
-  changePasswordHandlers.isInitialized = true;
-  console.log('✅ Change password modal setup complete');
 }
 
 // Change Password Modal handlers moved to setupChangePasswordModal function
 
 // Change avatar functionality
-let avatarPickerHandlers = {
-  isInitialized: false
-};
-
 function setupAvatarPicker() {
   const changeAvatarBtn = document.getElementById('changeAvatarBtn');
   const avatarOptions = document.getElementById('avatarOptions');
 
   if (!changeAvatarBtn || !avatarOptions) return;
-  
-  // Prevent duplicate initialization
-  if (avatarPickerHandlers.isInitialized) {
-    console.log('⚠️ Avatar picker already initialized, skipping');
-    return;
-  }
 
   changeAvatarBtn.addEventListener('click', () => {
     avatarOptions.classList.toggle('d-none');
@@ -3531,10 +3347,6 @@ function setupAvatarPicker() {
       showToast('เปลี่ยนรูปโปรไฟล์สำเร็จ!', 'success', 2000);
     });
   });
-  
-  // Mark as initialized
-  avatarPickerHandlers.isInitialized = true;
-  console.log('✅ Avatar picker setup complete');
 }
 
 // Load user profile data
